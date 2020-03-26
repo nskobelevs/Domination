@@ -42,6 +42,7 @@ typedef struct _board {
     Player *players[2];             //Pointers to the two players
     Cell *cells[8][8];              //8x8 grid of cells. 3 cells in each corner are unused
     unsigned short moveIndex;       //Current move index. Used to determine which player's turn it is
+    WINDOW *window;
 } Board;
 
 #endif //DOMINATION_COMPONENTS_H

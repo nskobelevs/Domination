@@ -5,6 +5,8 @@
 #ifndef DOMINATION_GUI_H
 #define DOMINATION_GUI_H
 
-void printGameBoard(WINDOW *gameBoard);
+#include "components.h"
+
+void drawBoard(Board *board);
 
 #endif //DOMINATION_GUI_H

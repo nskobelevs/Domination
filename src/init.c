@@ -15,6 +15,8 @@ static Player* initialisePlayer(void);
 static Player* initialisePlayer(void) {
     Player *player = (Player *)malloc(sizeof(Player));
 
+    WINDOW *window = newwin(30, 30, 0, 0);
+
     printf("Please enter player name: ");
 
     //A format string is generated so that if the length of name inside player
@@ -38,9 +40,11 @@ Board initialiseBoard(void) {
     Player *player1 = initialisePlayer();
     Player *player2 = initialisePlayer();
 
+
     board.players[0] = player1;
     board.players[1] = player2;
     board.moveIndex = 0;
+
 
     //Calculating distance from the centre to determine whether cell is used or not
     //i.e. to remove the corners

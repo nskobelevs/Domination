@@ -2,11 +2,11 @@
 // Created by nskobelevs on 25/03/2020.
 //
 
-#include <ncurses.h>
 #include "gui.h"
 
-void printGameBoard(WINDOW *gameBoard) {
-    mvwprintw(gameBoard, 0, 0, "\n\
+void drawBoard(Board *board) {
+    WINDOW *window = board->window;
+    mvwprintw(window, 0, 0, "\n\
                   ┌───────┬───────┬───────┬───────┐                \n\
                   │       │       │       │       │                \n\
                   │       │       │       │       │                \n\
@@ -40,5 +40,6 @@ void printGameBoard(WINDOW *gameBoard) {
                   │       │       │       │       │                \n\
                   │       │       │       │       │                \n\
                   └───────┴───────┴───────┴───────┘                ");
-    wrefresh(gameBoard);
+    box(window, 0, 0);
+    wrefresh(window);
 }
