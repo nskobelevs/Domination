@@ -6,6 +6,7 @@
 #define DOMINATION_COMPONENTS_H
 
 #include <stdint.h>
+#include <ncurses.h>
 
 typedef uint8_t byte;
 

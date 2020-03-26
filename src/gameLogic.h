@@ -5,4 +5,9 @@
 #ifndef DOMINATION_GAMELOGIC_H
 #define DOMINATION_GAMELOGIC_H
 
+#include "components.h"
+
+void movePieces(Cell *destination, Cell *source, unsigned int count);
+void shortenCell(Cell *cell);
+
 #endif //DOMINATION_GAMELOGIC_H

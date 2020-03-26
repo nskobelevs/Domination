@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "utils.h"
-#include "utils.h"
+#include "init.h"
+#include "init.h"
 
 static Player* initialisePlayer(void);
 

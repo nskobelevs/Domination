@@ -5,4 +5,8 @@
 #ifndef DOMINATION_DEBUGTOOLS_H
 #define DOMINATION_DEBUGTOOLS_H
 
+#include "components.h"
+
+void printCell(Cell *cell);
+
 #endif //DOMINATION_DEBUGTOOLS_H
