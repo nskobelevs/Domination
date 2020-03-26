@@ -16,31 +16,31 @@ typedef enum _colour {
 
 //Represents a player
 typedef struct _player {
-    char name[32];
-    Colour colour;
+    char name[32];                  //Name of the player
+    Colour colour;                  //Their chosen colour
+    unsigned int reservedCounter;   //How many pieces they have reserved
 } Player;
 
 //A game piece. Links to the next piece
 typedef struct _piece {
-    Player *owner;
-    struct _piece *next;
+    Player *owner;                  //Pointer to player who owns the piece
+    struct _piece *next;            //Pointer to the piece below it. NULL if it is the bottom piece
 } Piece;
 
 //A stack of game pieces. Links to the first piece and to the last.
 //Also stores the length
 //If head and tail are NULL, stack is empty.
-typedef struct _stack {
-    Piece *head;
-    Piece *tail;
-    byte length;
-} Stack;
+typedef struct _cell {
+    Piece *head;                    //Pointer to the top piece
+    Piece *tail;                    //Pointer to the bottom piece
+    byte length;                    //Number of pieces
+} Cell;
 
 //Represents a game board.
 typedef struct _board {
-    Player players[2];
-    Stack *cells[8][8];
-    unsigned short moveIndex;
+    Player *players[2];             //Pointers to the two players
+    Cell *cells[8][8];              //8x8 grid of cells. 3 cells in each corner are unused
+    unsigned short moveIndex;       //Current move index. Used to determine which player's turn it is
 } Board;
-
 
 #endif //DOMINATION_COMPONENTS_H
