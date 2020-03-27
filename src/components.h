@@ -14,7 +14,7 @@ typedef uint8_t byte;
 //Starts at 1 because these values are used for colours and
 //the index cant be 0
 typedef enum _colour {
-    RED = 1, GREEN, YELLOW, BLUE, MAGENTA, CYAN
+    RED = 1, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BLANK
 } Colour;
 
 //Represents a player

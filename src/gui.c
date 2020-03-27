@@ -24,7 +24,7 @@ void printTitle(void) {
     refresh();
 }
 
-void drawBoard(Game *game) {
+void drawBoard(Game *game, int selectedCellX, int selectedCellY) {
     WINDOW *boardWindow = game->boardWindow;
 
     const char *boxString[] = {
@@ -68,21 +68,39 @@ void drawBoard(Game *game) {
     }
 
     Cell *cell;
-    Piece *piece;
+    Piece *piece = NULL;
 
     int windowX;
     int windowY;
+
+    bool isSelected;
+
+    unsigned int character;
 
     //Drawing the individual pieces
     for (int rowIndex = 0; rowIndex < 8; rowIndex++) {
         for (int columnIndex = 0; columnIndex < 8; columnIndex++) {
             cell = game->cells[rowIndex][columnIndex];
-            if (cell == NULL || cell->head == NULL) {
-                continue;
-            }
+            isSelected = (rowIndex == selectedCellY && columnIndex == selectedCellX);
 
-            piece = cell->head;
-            wattron(boardWindow, COLOR_PAIR(piece->owner->colour));
+            if (cell == NULL)
+                continue;
+
+
+
+            if (cell->head == NULL) {
+                if (isSelected) {
+                    wattron(boardWindow, COLOR_PAIR(BLANK));
+                } else {
+                    continue;
+                }
+            } else {
+                piece = cell->head;
+                wattron(boardWindow, COLOR_PAIR(piece->owner->colour));
+                if (!isSelected) {
+                    wattron(boardWindow, A_DIM);
+                }
+            }
 
             windowX = (columnIndex * 8) + 5;
             windowY = (rowIndex * 4) + 3;
@@ -99,7 +117,12 @@ void drawBoard(Game *game) {
                 }
             }
 
-            wattroff(boardWindow, COLOR_PAIR(piece->owner->colour));
+            if (piece != NULL) {
+                wattroff(boardWindow, COLOR_PAIR(piece->owner->colour));
+            } else {
+                wattroff(boardWindow, COLOR_PAIR(BLANK));
+            }
+            wattroff(boardWindow, A_DIM);
         }
     }
     wrefresh(boardWindow);
@@ -212,14 +235,14 @@ void colourPrompt(Player *player, Colour *player1Colour) {
                 wattron(colourMenu, A_REVERSE);
             } else if (i == selectedIndex) {
                 //Underline and blink currently selected colour
-                wattron(colourMenu, A_UNDERLINE | A_BLINK);
+                wattron(colourMenu, A_UNDERLINE | A_BOLD);
             }
 
             //Enable currently drawn colour
             wattron(colourMenu, COLOR_PAIR(colours[i]));
             wprintw(colourMenu, "[%s]", colourOptions[i]);
             wattroff(colourMenu, COLOR_PAIR(colours[i]));
-            wattroff(colourMenu, A_UNDERLINE | A_REVERSE | A_BLINK); //Turn off all attributes
+            wattroff(colourMenu, A_UNDERLINE | A_REVERSE | A_BOLD); //Turn off all attributes
 
             //Draw a space between colours
             if (i != colourCount - 1)
@@ -240,4 +263,72 @@ void colourPrompt(Player *player, Colour *player1Colour) {
     delwin(colourMenu);
 
     //END COLOUR PROMPT
+}
+
+void drawCell(WINDOW *cellWindow, Cell *cell, int selectedCount) {
+
+    werase(cellWindow);
+    box(cellWindow, 0, 0);
+
+    int cellWindowWidth = getmaxx(cellWindow);
+
+    Piece *piece = cell->head;
+
+    int x, y;
+
+    int pieceHeight = 4;
+
+    int startY = (5 - cell->length) * (pieceHeight + 1) + 1;
+    wmove(cellWindow, startY, 1);
+
+    int depth = 0;
+    while (piece != NULL) {
+        if (depth == selectedCount)
+            wattron(cellWindow, A_DIM);
+
+        getyx(cellWindow, y, x);
+
+        wattron(cellWindow, COLOR_PAIR(piece->owner->colour));
+        for (int xOffset = 0; xOffset < cellWindowWidth-2; xOffset++) {
+            for (int yOffset = 0; yOffset < pieceHeight; yOffset++) {
+                mvwprintw(cellWindow, y + yOffset, x + xOffset, "█");
+            }
+        }
+        wattroff(cellWindow, COLOR_PAIR(piece->owner->colour));
+        wmove(cellWindow, y + pieceHeight + 1, x);
+
+        piece = piece->next;
+        depth += 1;
+    }
+
+    wattroff(cellWindow, A_DIM);
+
+
+    wrefresh(cellWindow);
+}
+
+Cell *getUserSelectedCell(Game *game, WINDOW *cellWindow) {
+    static int selectedCellX = 1;
+    static int selectedCellY = 1;
+
+    Cell *cell;
+    Piece *piece;
+    int key = -1;
+    while ((key = wgetch(game->boardWindow)) != 10) {
+        //Moving around to select a cell
+        //Checks out of bounds. NULL checks for invalid corners.
+        if (key == KEY_RIGHT && selectedCellX != 7 && game->cells[selectedCellY][selectedCellX + 1] != NULL) {
+            selectedCellX += 1;
+        } else if (key == KEY_LEFT && selectedCellX != 0 && game->cells[selectedCellY][selectedCellX - 1] != NULL) {
+            selectedCellX -= 1;
+        } else if (key == KEY_UP && selectedCellY != 0 && game->cells[selectedCellY - 1][selectedCellX] != NULL) {
+            selectedCellY -= 1;
+        } else if (key == KEY_DOWN && selectedCellY != 7 && game->cells[selectedCellY + 1][selectedCellX] != NULL) {
+            selectedCellY += 1;
+        }
+        drawCell(cellWindow, game->cells[selectedCellY][selectedCellX], 0);
+        drawBoard(game, selectedCellX, selectedCellY);
+    }
+
+    return game->cells[selectedCellY][selectedCellX];
 }

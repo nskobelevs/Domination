@@ -38,6 +38,7 @@ Game initialiseGame(void) {
     init_pair(BLUE, COLOR_BLUE, COLOR_BLACK);
     init_pair(MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(CYAN, COLOR_CYAN, COLOR_BLACK);
+    init_pair(BLANK, COLOR_WHITE, COLOR_BLACK);
 
     Game game = {};
 

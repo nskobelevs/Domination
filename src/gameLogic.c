@@ -3,10 +3,13 @@
 //
 
 #include <assert.h>
+#include <string.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "gameLogic.h"
+#include "gui.h"
 
 
 //Appends a number of pieces from the top of source Cell to the top destination Cell
@@ -100,6 +103,88 @@ void shortenCell(Cell *cell) {
     cell->tail->next = NULL;
 }
 
+//Runs the game loop
 void runGame(Game *game) {
+    WINDOW *window = game->boardWindow;
+    keypad(window, true);
 
+    int cellWindowHeight = 26;
+    int cellWindowWidth = 17;
+
+    int heightOffset = (LINES - cellWindowHeight) / 2;
+    int widthOffset = ( (COLS/2 + 34) + COLS) / 2 - cellWindowWidth/2;
+
+    WINDOW *cellWindow = newwin(cellWindowHeight, cellWindowWidth, heightOffset, widthOffset);
+    keypad(cellWindow, true);
+    box(cellWindow, 0, 0);
+    wrefresh(cellWindow);
+
+    int selectedCellX = 1;
+    int selectedCellY = 1;
+    int key = -1;
+
+    Cell *cell;
+    Piece *piece;
+
+    drawCell(cellWindow, game->cells[selectedCellY][selectedCellX], 0);
+    drawBoard(game, selectedCellX, selectedCellY);
+
+    Player *currentPlayer;
+
+    while (true) {
+
+        currentPlayer = game->players[game->moveIndex % 2];
+
+        Cell *source = NULL;
+        int amount;
+        Cell *destination;
+
+        const char *opponentStack = "You can't select your opponent's stack";
+        int offset;
+
+        while (true) {
+            source = getUserSelectedCell(game, cellWindow);
+            if (source->head->owner != currentPlayer) {
+                offset = (int)(COLS - strlen(opponentStack)) / 2;
+                mvprintw(43, offset, opponentStack);
+                refresh();
+                sleep(1);
+                move(42, offset);
+                clrtobot();
+                refresh();
+            } else {
+                break;
+            }
+        }
+
+        Cell *selectedCell = source;
+        int piecesCount = 1;
+        key = -1;
+        //Part 2. Selecting number of pieces to move
+        drawCell(cellWindow, selectedCell, piecesCount);
+        while ((key = wgetch(cellWindow)) != 10) {
+            if (key == KEY_UP && piecesCount > 1)
+                piecesCount -= 1;
+            else if (key == KEY_DOWN && piecesCount < selectedCell->length)
+                piecesCount += 1;
+
+            drawCell(cellWindow, selectedCell, piecesCount);
+        }
+
+        //Part 3. Selecting where to places the pieces
+        int taxicabDistance;
+        while (true) {
+            destination = getUserSelectedCell(game, cellWindow);
+
+
+
+        }
+
+
+        if (selectedCellX == 100)
+            break;
+    }
+
+
+    delwin(cellWindow);
 }
