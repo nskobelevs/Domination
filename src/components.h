@@ -11,13 +11,15 @@
 typedef uint8_t byte;
 
 //Represents the colour of a Player's pieces
+//Starts at 1 because these values are used for colours and
+//the index cant be 0
 typedef enum _colour {
-    RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
+    RED = 1, GREEN, YELLOW, BLUE, MAGENTA, CYAN
 } Colour;
 
 //Represents a player
 typedef struct _player {
-    char name[32];                  //Name of the player
+    char name[24];                  //Name of the player
     Colour colour;                  //Their chosen colour
     unsigned int reservedCounter;   //How many pieces they have reserved
 } Player;
@@ -37,12 +39,12 @@ typedef struct _cell {
     byte length;                    //Number of pieces
 } Cell;
 
-//Represents a game board.
-typedef struct _board {
+//Represents a game
+typedef struct _game {
     Player *players[2];             //Pointers to the two players
     Cell *cells[8][8];              //8x8 grid of cells. 3 cells in each corner are unused
     unsigned short moveIndex;       //Current move index. Used to determine which player's turn it is
-    WINDOW *window;
-} Board;
+    WINDOW *boardWindow;
+} Game;
 
 #endif //DOMINATION_COMPONENTS_H

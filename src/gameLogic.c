@@ -99,3 +99,7 @@ void shortenCell(Cell *cell) {
     cell->tail = newTail;
     cell->tail->next = NULL;
 }
+
+void runGame(Game *game) {
+
+}

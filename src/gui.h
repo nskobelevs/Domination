@@ -7,6 +7,10 @@
 
 #include "components.h"
 
-void drawBoard(Board *board);
+void drawBoard(Game *game);
+void printTitle(void);
+
+void namePrompt(Player *player, unsigned int playerIndex);
+void colourPrompt(Player *player, Colour *player1Colour);
 
 #endif //DOMINATION_GUI_H

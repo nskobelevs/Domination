@@ -9,17 +9,14 @@
 
 int main() {
     setlocale(LC_ALL, "");
-    initscr();
-    Board board = initialiseBoard();
-    board.window = newwin(35, 69, 0, 0);
-    drawBoard(&board);
-    curs_set(0);
+    Game game = initialiseGame();
 
-    wgetch(board.window);
+    runGame(&game);
 
 
+
+    delwin(game.boardWindow);
     endwin();
-    delwin(board.window);
-    freeBoard(board);
+    freeBoard(game);
     return 0;
 }
