@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 #include "gui.h"
 
 void printTitle(void) {
@@ -154,7 +155,7 @@ void namePrompt(Player *player, unsigned int playerIndex) {
 
     echo();                                                                 //Allow typing
     curs_set(1);                                                            //Cursor set to blink
-    wgetnstr(promptWindow, player->name, sizeof(player->name) - 1);         //Get the string
+    wgetnstr(promptWindow, player->name, -1);                               //Get the string
     noecho();                                                               //Disallow typing
     curs_set(0);                                                            //Remove blinking cursor
 
@@ -274,7 +275,8 @@ void drawCell(WINDOW *cellWindow, Cell *cell, int selectedCount) {
 
     Piece *piece = cell->head;
 
-    int x, y;
+    int x = 0;
+    int y = 0;
 
     int pieceHeight = 4;
 
@@ -295,7 +297,7 @@ void drawCell(WINDOW *cellWindow, Cell *cell, int selectedCount) {
             }
         }
         wattroff(cellWindow, COLOR_PAIR(piece->owner->colour));
-        wmove(cellWindow, y + pieceHeight + 1, x);
+        wmove(cellWindow, y + pieceHeight + 1, 1);
 
         piece = piece->next;
         depth += 1;
@@ -307,7 +309,7 @@ void drawCell(WINDOW *cellWindow, Cell *cell, int selectedCount) {
     wrefresh(cellWindow);
 }
 
-Cell *getUserSelectedCell(Game *game, WINDOW *cellWindow) {
+Coord getUserSelectedCell(Game *game, WINDOW *cellWindow) {
     static int selectedCellX = 1;
     static int selectedCellY = 1;
 
@@ -330,5 +332,16 @@ Cell *getUserSelectedCell(Game *game, WINDOW *cellWindow) {
         drawBoard(game, selectedCellX, selectedCellY);
     }
 
-    return game->cells[selectedCellY][selectedCellX];
+    Coord coord = {selectedCellX, selectedCellY};
+    return coord;
+}
+
+void printMessage(int seconds, const char * const message) {
+    int offset = (int)(COLS - strlen(message)) / 2;
+    mvprintw(43, offset, message);
+    refresh();
+    sleep(seconds);
+    move(42, offset);
+    clrtobot();
+    refresh();
 }

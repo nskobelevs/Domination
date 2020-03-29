@@ -11,6 +11,8 @@
 #include "gameLogic.h"
 #include "gui.h"
 
+static int getDistance(Coord coord1, Coord coord2);
+
 
 //Appends a number of pieces from the top of source Cell to the top destination Cell
 void movePieces(Cell *destination, Cell *source, unsigned int count) {
@@ -22,10 +24,30 @@ void movePieces(Cell *destination, Cell *source, unsigned int count) {
     assert(source->length != 0);
     assert(destination != source);
 
+    FILE *outpitFile = fopen("domination.log", "a");
+
+    fprintf(outpitFile, "Moving %d pieces.", count);
+    fprintf(outpitFile, "Before:");
+    fprintf(outpitFile, "\tSource: %p\n", source);
+    fprintf(outpitFile, "\tSource Head: %p\n", source->head);
+    fprintf(outpitFile, "\tSource Tail: %p\n", source->tail);
+    fprintf(outpitFile, "\tSource Length: %d\n\n", source->length);
+
+    fprintf(outpitFile, "\tDestination: %p\n", destination);
+    fprintf(outpitFile, "\tDestination Head: %p\n", destination->head);
+    fprintf(outpitFile, "\tDestination Tail: %p\n", destination->tail);
+    fprintf(outpitFile, "\tDestination Length: %d\n\n", destination->length);
+
+    fclose(outpitFile);
+
+
     if (count == source->length) {
         source->tail->next = destination->head;
         destination->head = source->head;
         destination->length += count;
+
+        if (destination->tail == NULL)
+            destination->tail = source->tail;
 
         source->head = NULL;
         source->tail = NULL;
@@ -66,6 +88,9 @@ void movePieces(Cell *destination, Cell *source, unsigned int count) {
     destination->head = source->head;
     source->head = newSourceHead;
 
+    if (destination->tail == NULL)
+        destination->tail = piece;
+
     source->length -= count;
     destination->length += count;
 
@@ -101,6 +126,11 @@ void shortenCell(Cell *cell) {
     //Setting the new tail and stopping tail from pointing to free'd memory
     cell->tail = newTail;
     cell->tail->next = NULL;
+    cell->length = 5;
+}
+
+static int getDistance(Coord coord1, Coord coord2) {
+    return abs(coord1.x - coord2.x) + abs(coord1.y - coord2.y);
 }
 
 //Runs the game loop
@@ -125,36 +155,39 @@ void runGame(Game *game) {
 
     Cell *cell;
     Piece *piece;
+    Coord sourceCoord;
+    Coord destinationCoord;
 
-    drawCell(cellWindow, game->cells[selectedCellY][selectedCellX], 0);
-    drawBoard(game, selectedCellX, selectedCellY);
+    char temp[100];
 
     Player *currentPlayer;
+    Player *opponentPlayer;
 
     while (true) {
 
+        drawCell(cellWindow, game->cells[selectedCellY][selectedCellX], 0);
+        drawBoard(game, selectedCellX, selectedCellY);
+
         currentPlayer = game->players[game->moveIndex % 2];
 
+        sprintf(temp, "%s's move...", currentPlayer->name);
+        attron(COLOR_PAIR(currentPlayer->colour));
+        printMessage(1, temp);
+        attroff(COLOR_PAIR(currentPlayer->colour));
+
         Cell *source = NULL;
-        int amount;
         Cell *destination;
 
-        const char *opponentStack = "You can't select your opponent's stack";
-        int offset;
 
         while (true) {
-            source = getUserSelectedCell(game, cellWindow);
-            if (source->head->owner != currentPlayer) {
-                offset = (int)(COLS - strlen(opponentStack)) / 2;
-                mvprintw(43, offset, opponentStack);
-                refresh();
-                sleep(1);
-                move(42, offset);
-                clrtobot();
-                refresh();
-            } else {
+            sourceCoord = getUserSelectedCell(game, cellWindow);
+            source = game->cells[sourceCoord.y][sourceCoord.x];
+            if (source->length == 0)
+                printMessage(1, "You can't move piece from an empty cell");
+            else if (source->head->owner != currentPlayer)
+                printMessage(1, "You can't move your opponents piece");
+            else
                 break;
-            }
         }
 
         Cell *selectedCell = source;
@@ -162,7 +195,7 @@ void runGame(Game *game) {
         key = -1;
         //Part 2. Selecting number of pieces to move
         drawCell(cellWindow, selectedCell, piecesCount);
-        while ((key = wgetch(cellWindow)) != 10) {
+        while (source->length != 1 && (key = wgetch(cellWindow)) != 10) {
             if (key == KEY_UP && piecesCount > 1)
                 piecesCount -= 1;
             else if (key == KEY_DOWN && piecesCount < selectedCell->length)
@@ -170,21 +203,57 @@ void runGame(Game *game) {
 
             drawCell(cellWindow, selectedCell, piecesCount);
         }
-
         //Part 3. Selecting where to places the pieces
         int taxicabDistance;
         while (true) {
-            destination = getUserSelectedCell(game, cellWindow);
+            destinationCoord = getUserSelectedCell(game, cellWindow);
+            destination = game->cells[destinationCoord.y][destinationCoord.x];
+            assert(destination != NULL);
+            taxicabDistance = getDistance(sourceCoord, destinationCoord);
 
-
-
+            if (taxicabDistance > source->length) {
+                sprintf(temp, "You can move at most %d pieces", source->length);
+                printMessage(1, temp);
+            } else if (taxicabDistance == 0)
+                printMessage(1, "You can't move to the same space");
+            else if (taxicabDistance <= source->length) {
+                movePieces(destination, source, piecesCount);
+                selectedCellX = destinationCoord.x;
+                selectedCellY = destinationCoord.y;
+                break;
+            }
         }
 
+        game->moveIndex++;
 
-        if (selectedCellX == 100)
+        if (game->moveIndex == 100)
             break;
     }
 
-
     delwin(cellWindow);
+}
+
+Player *getBoardWinner(Game *game) {
+    Player *player = NULL;
+
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            //Skip corners
+            if (game->cells[y][x] == NULL)
+                continue;
+
+            //Skip empty
+            if (game->cells[y][x]->length == 0)
+                continue;
+
+            //First non-corner and non-empty cell
+            if (player == NULL)
+                player = game->cells[y][x]->head->owner;
+
+            if (player != game->cells[y][x]->head->owner)
+                return NULL;
+        }
+    }
+
+    return player;
 }

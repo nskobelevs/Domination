@@ -15,6 +15,8 @@ void colourPrompt(Player *player, Colour *player1Colour);
 
 void drawCell(WINDOW *cellWindow, Cell *cell, int selectedCount);
 
-Cell *getUserSelectedCell(Game *game, WINDOW *cellWindow);
+Coord getUserSelectedCell(Game *game, WINDOW *cellWindow);
+
+void printMessage(int seconds, const char *message);
 
 #endif //DOMINATION_GUI_H

@@ -47,4 +47,10 @@ typedef struct _game {
     WINDOW *boardWindow;
 } Game;
 
+//Used to store x and y of a cell
+typedef struct _coord {
+    byte x;
+    byte y;
+} Coord;
+
 #endif //DOMINATION_COMPONENTS_H
