@@ -1,56 +1,53 @@
-//
-// Created by nskobelevs on 25/03/2020.
-//
-
 #ifndef DOMINATION_COMPONENTS_H
 #define DOMINATION_COMPONENTS_H
 
 #include <stdint.h>
-#include <ncurses.h>
 
-typedef uint8_t byte;
-
-//Represents the colour of a Player's pieces
-//Starts at 1 because these values are used for colours and
-//the index cant be 0
+/**
+ * An enum to store the colour of a player<br>
+ * 1-based indexing due to having to use it in <i>color_pair</i> which can't use 0 as index
+ */
 typedef enum _colour {
     RED = 1, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BLANK
 } Colour;
 
-//Represents a player
-typedef struct _player {
-    char name[24];                  //Name of the player
-    Colour colour;                  //Their chosen colour
-    unsigned int reservedCounter;   //How many pieces they have reserved
+
+/**
+ * Represents a player in the game
+ */
+typedef struct Player {
+    char name[24]; //!< The player name
+    Colour colour; //!< The player's chosen colour representation
+    unsigned int reservedCounter; //!< The number of pieces a player has reserved
 } Player;
 
-//A game piece. Links to the next piece
-typedef struct _piece {
-    Player *owner;                  //Pointer to player who owns the piece
-    struct _piece *next;            //Pointer to the piece below it. NULL if it is the bottom piece
+/**
+ * Represents a single game piece
+ */
+typedef struct Piece {
+    Player *owner; //!< A pointer to the player that own's the piece
+    struct Piece *next; //!< A pointer to the piece below it. NULL if this is the bottom-most piece
 } Piece;
 
-//A stack of game pieces. Links to the first piece and to the last.
-//Also stores the length
-//If head and tail are NULL, stack is empty.
-typedef struct _cell {
-    Piece *head;                    //Pointer to the top piece
-    Piece *tail;                    //Pointer to the bottom piece
-    byte length;                    //Number of pieces
+/**
+ * Represents a cell on the 8x8 game board
+ */
+typedef struct Cell {
+    Piece *head; //!< Pointer to the top-most piece in that cell
+    Piece *tail; //!< Pointer to the bottom most piece in that cell
+    uint8_t length; //!< The number of Pieces on the cell
+    uint8_t rowIndex; //!< The row index of the cell
+    uint8_t columnIndex; //!< The column index of the cell
 } Cell;
 
-//Represents a game
-typedef struct _game {
-    Player *players[2];             //Pointers to the two players
-    Cell *cells[8][8];              //8x8 grid of cells. 3 cells in each corner are unused
-    unsigned short moveIndex;       //Current move index. Used to determine which player's turn it is
-    WINDOW *boardWindow;
+/**
+ * Represents an instance of the game
+ */
+typedef struct Game {
+    Player *players[2]; //!< Pointers to player1 and player2
+    Cell *cells[8][8]; //!< an 8x8 2D array of cells. If NULL, cell is not a valid position.
+    unsigned short moveIndex; //!< The current move index
 } Game;
 
-//Used to store x and y of a cell
-typedef struct _coord {
-    byte x;
-    byte y;
-} Coord;
 
 #endif //DOMINATION_COMPONENTS_H

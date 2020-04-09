@@ -7,7 +7,7 @@
 
 #include "components.h"
 
-Game initialiseGame(void);
-void freeBoard(Game game);
+Game *initialiseGame(void);
+void freeBoard(Game *game);
 
 #endif //DOMINATION_INIT_H
