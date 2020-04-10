@@ -16,6 +16,18 @@ static bool playCanMakeMove(Game *game, Player *player);
 static void movePieces(Cell *destination, Cell *source, unsigned int count);
 static void shortenCell(Cell *cell);
 
+static void placePiece(Cell *cell, Player *player) {
+    Piece *piece = (Piece *)malloc(sizeof(*piece));
+
+    piece->owner = player;
+    piece->next = cell->head;
+    cell->head = piece;
+    cell->length += 1;
+
+    if (cell->length > 4)
+        shortenCell(cell);
+}
+
 /**
  * \relates Cell
  * Moves <b>count</b> number of pieces from <b>source</b> to <b>destination</b>
@@ -147,8 +159,22 @@ static int getDistance(Cell *cell1, Cell *cell2) {
  */
 void runGame(Game *game) {
 
-    printBoard(game);
-    Cell *source = selectSource(game);
+    Cell *source;
+    Cell *destination;
+    bool placeReservedPiece;
+
+    printBoard(game, NULL);
+    source = selectCell(game, true, &placeReservedPiece);
+    printf("%s\n", placeReservedPiece ? "true" : "false");
+    if (placeReservedPiece) {
+        //TODO placepiece
+    } else {
+        printBoard(game, source);
+        destination = selectCell(game, false, NULL);
+        movePieces(destination, source, 1);
+    }
+
+    printBoard(game, NULL);
 }
 
 /**

@@ -7,14 +7,15 @@
 #ifndef DOMINATION_GUI_H
 #define DOMINATION_GUI_H
 
+#include <stdbool.h>
 #include "components.h"
 
 void askPlayerForName(Player *player, Player *otherPlayer);
 
 void askPlayerForColour(Player *player, Player *otherPlayer);
 
-void printBoard(Game *game);
+void printBoard(Game *game, Cell *selectedCell);
 
-Cell *selectSource(Game *game);
+Cell *selectCell(Game *game, bool selectingSource, bool *placeReservedPiece);
 
 #endif //DOMINATION_GUI_H

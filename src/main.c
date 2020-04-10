@@ -6,8 +6,9 @@ int main() {
     setlocale(LC_ALL, "");
     Game *game = initialiseGame();
 
-    runGame(game);
+    game->players[0]->reservedCounter = 10;
 
+    runGame(game);
     freeBoard(game);
     return 0;
 }
