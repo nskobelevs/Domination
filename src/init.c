@@ -75,6 +75,8 @@ Game *initialiseGame(void) {
             cell->head = NULL;
             cell->tail = NULL;
             cell->length = 0;
+            cell->rowIndex = rowIndex;
+            cell->columnIndex = columnIndex;
             game->cells[rowIndex][columnIndex] = cell;
         }
     }

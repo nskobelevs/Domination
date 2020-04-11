@@ -7,11 +7,13 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include "gui.h"
+#include "gameLogic.h"
 
 #define printWidth 68
 
-static void printCentered(unsigned int width, char paddingChar, const char *format, ...);
-static void printMessage(char *line1, char *line2, char *line3);
+static void printCentered(char paddingChar, const char *format, ...);
+static void printSeparator(void);
+static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
 
 static const char *colours[] = {
         "",
@@ -23,6 +25,7 @@ static const char *colours[] = {
         };
 
 const char *boardString[] = {
+        "    0       1       2       3       4       5       6       7    ",
         "                ┌───────┬───────┬───────┬───────┐                ",
         "                │       │       │       │       │                ",
         "                │       │       │       │       │                ",
@@ -66,7 +69,7 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
 
     while (1) {
         //Asks player for their name
-        printCentered(printWidth, ' ', "Please enter your name: ");
+        printCentered(' ', "Please enter your name: ");
         printf("\t> ");
         fgets(player->name, sizeof(player->name), stdin);
 
@@ -75,17 +78,17 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
 
         //Checking names aren't the same
         if (otherPlayer != NULL && strcmp(player->name, otherPlayer->name) == 0)
-            printCentered(printWidth, '-', "Both players can't have the same name");
+            printCentered('-', "Both players can't have the same name");
         else
             break;
     }
 }
 
 void askPlayerForColour(Player *player, Player *otherPlayer) {
-    printCentered(printWidth, '-', "Select your colour [index]:");
+    printCentered('-', "Select your colour [index]:");
     for (int index = 1; index < 6; index++) {
         if (otherPlayer == NULL || index != (int)otherPlayer->colour)
-            printCentered(printWidth, ' ', "%d) %s", index, colours[index]);
+            printf("\t\t\t%d) %s\n", index, colours[index]);
     }
 
     int colourValue;
@@ -97,13 +100,13 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
         while ((getchar() != '\n'));
 
         if (otherPlayer != NULL && colourValue == otherPlayer->colour)
-            printCentered(printWidth, ' ', "Both players can't have the same colour");
+            printCentered(' ', "Both players can't have the same colour");
         else if (colourValue < 1 || colourValue > 6)
-            printCentered(printWidth, ' ', "Colour index out of range");
+            printCentered(' ', "Colour index out of range");
         else
             break;
 
-        printCentered(printWidth, '-', "Select your colour [index]:");
+        printCentered('-', "Select your colour [index]:");
     }
 
     player->colour = (Colour)colourValue;
@@ -120,12 +123,11 @@ void printBoard(Game *game, Cell *selectedCell) {
     char stackString[5];
     int strIndex;
 
-    for (int pixelY = 0; pixelY < 33; pixelY++) {
+    for (int pixelY = 0; pixelY < 34; pixelY++) {
 
 
         //Printing cell details
-        if (pixelY % 4 == 2) {
-
+        if (pixelY % 4 == 3) {
             // signifies whether the first piece in a row has been printed
             // The first cell prints "|   |"
             // The rest print "   |"
@@ -134,7 +136,7 @@ void printBoard(Game *game, Cell *selectedCell) {
 
             //Converting pixel position to row index
             cellY = pixelY / 4;
-
+            printf(" %d ", cellY);
             //Printing the row of cells
             for (int cellX = 0; cellX < 8; cellX++) {
 
@@ -161,7 +163,6 @@ void printBoard(Game *game, Cell *selectedCell) {
                     }
 
                     stackString[strIndex] = '\0';
-
                     printf("%s%c%5s%c│",
                             printedFirst ? "" : "│",
                            cell == selectedCell ? '[' : ' ',
@@ -174,12 +175,12 @@ void printBoard(Game *game, Cell *selectedCell) {
             }
             printf("\n");
         } else {
-            printf("%s\n", boardString[pixelY]);
+            printf("   %s\n", boardString[pixelY]);
         }
     }
 }
 
-static void printCentered(unsigned int width, char paddingChar, const char *format, ...) {
+static void printCentered(char paddingChar, const char *format, ...) {
     char temp[128];
 
     va_list arg;
@@ -187,103 +188,157 @@ static void printCentered(unsigned int width, char paddingChar, const char *form
     vsprintf(temp, format, arg);
     va_end(arg);
 
-    unsigned int padding = (width - strlen(temp)) / 2;
+    unsigned int padding = (printWidth - strlen(temp)) / 2;
 
     unsigned length = 0;
 
-    for (int i = 0; i < padding && length < width; i++, length++)
+    for (int i = 0; i < padding && length < printWidth; i++, length++)
         printf("%c", paddingChar);
+
     printf("%s", temp);
 
     length += strlen(temp);
 
-    for (int i = 0; i < padding || length < width; i++, length++)
+    for (int i = 0; i < padding || length < printWidth; i++, length++)
         printf("%c", paddingChar);
 
     printf("\n");
 }
 
-static void printMessage(char *line1, char *line2, char *line3) {
-    printCentered(printWidth, '-', "");
-    printCentered(printWidth, ' ', line1);
-    printCentered(printWidth, ' ', line2);
-    printCentered(printWidth, ' ', line3);
+static void printSeparator(void) {
+    printCentered('-', "");
 }
 
-Cell *selectCell(Game *game, bool selectingSource, bool *placeReservedPiece) {
-    char temp[64];
+Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist) {
+    char temp[32];
+    unsigned int cellX, cellY, sscanfreturn, distance;
+    Cell *cell;
+
+    char message[64] = "";
 
     Player *currentPlayer = game->players[game->moveIndex % 2];
+    Player *opponentPlayer = game->players[(game->moveIndex + 1) % 2];
 
-    printCentered(printWidth, '-', "");
-    if (selectingSource) {
-        printCentered(printWidth, ' ', "%s's Move", currentPlayer->name);
-        printCentered(printWidth, ' ', "You have %d pieces reserved", currentPlayer->reservedCounter);
+    printBoard(game, sourceCell);
+    if (sourceCell == NULL) {
+        printCentered('-', "%s's Move (%s)", currentPlayer->name, colours[(int)currentPlayer->colour]);
+        printCentered(' ', "You have %d pieces reserved.", currentPlayer->reservedCounter);
+        printCentered(' ', "%s has %d pieces reserved", opponentPlayer->name, opponentPlayer->reservedCounter);
     } else {
-        printCentered(printWidth, ' ', "Select where to move the pieces to");
-        printf("\n");
+        printSeparator();
+        printCentered(' ', "Select where you want to move your stack to");
+        printCentered(' ', "You can move at most %d cells", maxDist);
     }
 
-    unsigned cellX, cellY, scanfReturn;
-
-    Cell *cell;
     while (true) {
-        printCentered(printWidth, ' ', "Please pick a cell (x and y separated by a space)", "");
+        if (strlen(message) != 0) {
+            printBoard(game, sourceCell);
+            printSeparator();
+            printCentered(' ', message);
+            printf("\n");
+        }
+
+
+        printCentered(' ', "Please select cell (x & y separated by space");
         printf("\t> ");
         fgets(temp, sizeof(temp), stdin);
-        scanfReturn = sscanf(temp,"%d %d", &cellX, &cellY);
+        sscanfreturn = sscanf(temp, "%d %d", &cellX, &cellY);
 
-        if (scanfReturn != 2) {
-            printCentered(printWidth, '-', "Not enough inputs. Please input x and y seperated by a space");
-            continue;
-        } else if (cellX < 0 || cellY < 0 || cellX > 7 || cellY > 7) {
-            printBoard(game, NULL);
-            printMessage("Position out of range. Input must be 0 <= x <= 7", "", "");
+        //Cells outside the board
+        if (sscanfreturn != 2 || cellX < 0 || cellY < 0 || cellX > 7 || cellY > 7) {
+            strcpy(message, "Invalid choice");
             continue;
         }
-
 
         cell = game->cells[cellY][cellX];
+
+        //Corner cells which are invalid
         if (cell == NULL) {
-            printBoard(game, NULL);
-            printf("\n");
-            printMessage("That square ins't part of the game", "", "");
-            printf("\n");
-        }
-        else if (cell->head == NULL) {
-            printBoard(game, NULL);
-            printMessage("Can't choose an empty cell", "", "");
-            printf("\n");
-        } else if (selectingSource) {
-            printBoard(game, cell);
-            printCentered(printWidth, '-', "");
-            printCentered(printWidth, ' ', "Selected cell at (%d, %d)", cellX, cellY);
-            printCentered(printWidth, ' ', "What would you like to do?");
-            printCentered(printWidth, ' ', "Move pieces [move] / Place reserved piece [place]");
-
-            printf("\t> ");
-            fgets(temp, sizeof(temp), stdin);
-
-            if (strncmp(temp, "place", 5) == 0) {
-                *placeReservedPiece = true;
-                break;
-            } else if (strncmp(temp, "move", 4) == 0) {
-                if (cell->head->owner == currentPlayer) {
-                    *placeReservedPiece = false;
-                    break;
-                } else {
-                    printCentered(printWidth, ' ', "You can't move your opponent's stack");
-                }
-            } else {
-                printBoard(game, NULL);
-                printCentered(printWidth, ' ', "Invalid input");
-                printf("\n");
-                printCentered(printWidth, '-', "");
+            strcpy(message, "Invalid choice");
+        } else if (cell == sourceCell) {
+            strcpy(message, "Can't move to the cell you're starting from");
+        } else if (sourceCell == NULL) {
+            if( askAction(game, cell, message, currentPlayer, placeReservedPiece) ) {
+                return cell;
             }
         } else {
-            break;
+            distance = getDistance(sourceCell, cell);
+            if (distance > maxDist) {
+                strcpy(message, "That cell is to far away");
+                continue;
+            }
+            return cell;
         }
     }
 
-    return cell;
+}
+
+static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece) {
+    char temp[64];
+
+    printBoard(game, cell);
+    printSeparator();
+    printCentered(' ', "Selected cell at (%d, %d)", cell->columnIndex, cell->rowIndex);
+    printCentered(' ', "What would you like to do?");
+    printCentered(' ', "[move] pieces / [place] reserved piece / go [back]");
+    printf("\t> ");
+    fgets(temp, sizeof(temp), stdin);
+
+    if (strncmp(temp, "move", 4) == 0) {
+        if (cell->head->owner != currentPlayer) {
+            strcpy(message, "You can't move your opponent's stack");
+        } else {
+            *placeReservedPiece = false;
+            return true;
+        }
+    } else if (strncmp(temp, "place", 5) == 0) {
+        if (currentPlayer->reservedCounter == 0) {
+            strcpy(message, "You don't have any reserved piece");
+        } else {
+            *placeReservedPiece = true;
+            return true;
+        }
+    } else if (strncmp(temp, "back", 4) == 0) {
+        strcpy(message, "Going back..");
+    } else {
+        strcpy(message, "Invalid choice");
+    }
+
+    return false;
+}
+
+unsigned int askCount(Game *game, Cell *source) {
+    if (source->length == 1) {
+        return 1;
+    }
+    char temp[64];
+    char message[64] = "";
+
+    unsigned int count, sscanfReturn;
+
+    while (true) {
+        printBoard(game, source);
+        printSeparator();
+        printCentered(' ', "This cell has %d pieces.", source->length);
+        printCentered(' ', "How many do you want to move?");
+        printf("\n\t> ");
+
+        fgets(temp, sizeof(temp), stdin);
+        sscanfReturn = sscanf(temp, "%d", &count);
+
+        if (sscanfReturn != 1 || count < 1 || count > source->length) {
+            strcpy(message, "Not a valid amount");
+            continue;
+        }
+
+        break;
+    }
+}
+
+void printWinner(Game *game, Player *player) {
+    printBoard(game, NULL);
+    printSeparator();
+    printCentered(' ', "Congratulations!");
+    printf("\n");
+    printCentered(' ', "%s Wins!", player->name);
 }

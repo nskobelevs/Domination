@@ -11,13 +11,13 @@
 #include "gui.h"
 
 
-static int getDistance(Cell *cell1, Cell *cell2);
-static bool playCanMakeMove(Game *game, Player *player);
-static void movePieces(Cell *destination, Cell *source, unsigned int count);
+static bool playerCanMakeMove(Game *game, Player *player);
 static void shortenCell(Cell *cell);
 
 static void placePiece(Cell *cell, Player *player) {
     Piece *piece = (Piece *)malloc(sizeof(*piece));
+
+    player->reservedCounter--;
 
     piece->owner = player;
     piece->next = cell->head;
@@ -35,7 +35,7 @@ static void placePiece(Cell *cell, Player *player) {
  * @param source Where to move the pieces from
  * @param count How many pieces to move<br>
  */
-static void movePieces(Cell *destination, Cell *source, unsigned int count) {
+void movePieces(Cell *source, Cell *destination, unsigned int count) {
 
     //Basic assumptions
     assert(count <= source->length);
@@ -148,7 +148,7 @@ static void shortenCell(Cell *cell) {
  * @param cell2 Cell2
  * @return |cell1.rowIndex - cell2.rowIndex| + |cell1.columnIndex - cell2.columnIndex|
  */
-static int getDistance(Cell *cell1, Cell *cell2) {
+unsigned  getDistance(Cell *cell1, Cell *cell2) {
     return abs(cell1->rowIndex - cell2->rowIndex) + abs(cell1->columnIndex - cell2->columnIndex);
 }
 
@@ -159,22 +159,31 @@ static int getDistance(Cell *cell1, Cell *cell2) {
  */
 void runGame(Game *game) {
 
-    Cell *source;
-    Cell *destination;
+    Cell *source, *destination;
     bool placeReservedPiece;
+    Player *currentPlayer, *otherPlayer;
+    unsigned int count;
 
-    printBoard(game, NULL);
-    source = selectCell(game, true, &placeReservedPiece);
-    printf("%s\n", placeReservedPiece ? "true" : "false");
-    if (placeReservedPiece) {
-        //TODO placepiece
-    } else {
-        printBoard(game, source);
-        destination = selectCell(game, false, NULL);
-        movePieces(destination, source, 1);
+    while (true) {
+        currentPlayer = game->players[game->moveIndex % 2];
+        otherPlayer = game->players[(game->moveIndex + 1) % 2];
+        source = selectCell(game, NULL, &placeReservedPiece, 0);
+
+        if (placeReservedPiece) {
+            placePiece(source, currentPlayer);
+        } else {
+            count = askCount(game, source);
+            destination = selectCell(game, source, NULL, count);
+            movePieces(source, destination, count);
+        }
+
+        if (otherPlayer->reservedCounter == 0 && !playerCanMakeMove(game, otherPlayer)) {
+            printWinner(game, currentPlayer);
+            break;
+        }
+
+        game->moveIndex++;
     }
-
-    printBoard(game, NULL);
 }
 
 /**
@@ -184,7 +193,7 @@ void runGame(Game *game) {
  * @param player The player being checked
  * @return bool signifying whether player can move
  */
-static bool playCanMakeMove(Game *game, Player *player) {
+static bool playerCanMakeMove(Game *game, Player *player) {
     Cell *cell;
 
     //Looping through cell grid

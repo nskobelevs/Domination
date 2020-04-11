@@ -16,6 +16,12 @@ void askPlayerForColour(Player *player, Player *otherPlayer);
 
 void printBoard(Game *game, Cell *selectedCell);
 
-Cell *selectCell(Game *game, bool selectingSource, bool *placeReservedPiece);
+Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist);
+
+unsigned int askCount(Game *game, Cell *source);
+
+void printWinner(Game *game, Player *player);
+
+
 
 #endif //DOMINATION_GUI_H
