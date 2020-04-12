@@ -152,7 +152,7 @@ unsigned  getDistance(Cell *cell1, Cell *cell2) {
 void runGame(Game *game) {
 
     Cell *source, *destination;
-    bool placeReservedPiece;
+    bool placeReservedPiece = false;
     Player *currentPlayer, *otherPlayer;
     unsigned int count;
 
@@ -160,7 +160,6 @@ void runGame(Game *game) {
         currentPlayer = game->players[game->moveIndex % 2];
         otherPlayer = game->players[(game->moveIndex + 1) % 2];
         source = selectCell(game, NULL, &placeReservedPiece, 0);
-
         if (placeReservedPiece) {
             placePiece(source, currentPlayer);
         } else {

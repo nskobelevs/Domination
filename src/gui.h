@@ -1,9 +1,3 @@
-//
-// Created by Nikita Skobelevs on 09/04/2020.
-//
-
-//This header file is shared by gui_posix and gui_windows
-
 #ifndef DOMINATION_GUI_H
 #define DOMINATION_GUI_H
 
@@ -14,8 +8,6 @@
 #include <stdarg.h>
 #include "gameLogic.h"
 #include "components.h"
-
-extern bool usingCurses;
 
 void printTitle(void);
 
@@ -31,17 +23,23 @@ unsigned int askCount(Game *game, Cell *source);
 
 void printWinner(Game *game, Player *player);
 
-//Curses only functions
-void initCurses(void);
-void endCurses(void);
-
-static const char *colours[] = {
+static const char *colourStrings[] = {
         "",
         "Red",
         "Green",
         "Yellow",
         "Blue",
         "Magenta",
+};
+
+static const Colour colours[] = {
+        0,
+        RED,
+        GREEN,
+        YELLOW,
+        BLUE,
+        MAGENTA,
+        BLANK
 };
 
 static const char *boardString[] = {

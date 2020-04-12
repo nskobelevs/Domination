@@ -30,19 +30,13 @@ static Player *initialisePlayer(unsigned int playerIndex, Player *otherPlayer) {
 Game *initialiseGame(void) {
 
     //If building curses version
-    if (usingCurses) {
-        initCurses();
-    }
 
     Game *game = (Game *) malloc(sizeof(*game));
-
-    printTitle();
-
 
     //Initialising both players
     Player *player1 = initialisePlayer(1, NULL);
     Player *player2 = initialisePlayer(2, player1);
-    exit(1);
+
     game->players[0] = player1;
     game->players[1] = player2;
     game->moveIndex = 0;
@@ -138,8 +132,4 @@ void freeBoard(Game *game) {
     //Free game itself
     free(game);
 
-    //If building curses version
-    if (usingCurses) {
-        endCurses();
-    }
 }

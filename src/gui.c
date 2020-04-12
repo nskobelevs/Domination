@@ -1,10 +1,4 @@
-//
-// Created by Nikita Skobelevs on 09/04/2020.
-//
-
 #include "gui.h"
-
-bool usingCurses = false;
 
 #define printWidth 68
 
@@ -12,12 +6,19 @@ static void printCentered(char paddingChar, const char *format, ...);
 static void printSeparator(void);
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
 
-//Only used for curses build. Defined in guiCurses.c
-void initCurses(void) {}
-void endCurses(void) {}
+//Uses clrscr() in conio to clear screen in Windows. Else uses ANSI escape characters
+#ifdef _WIN32
+    #include <conio.h>
+#else
+    #define clrscr() printf("\033[H\033[J");
+#endif
 
+/**
+ * Clears the screen and print the title
+ */
 void printTitle(void) {
     unsigned int titleLines = sizeof(titleString) / sizeof(*titleString);
+    clrscr();
     for (int i = 0; i < titleLines; i++) {
         printCentered(' ', titleString[i]);
     }
@@ -30,7 +31,8 @@ void printTitle(void) {
  * @param otherPlayer If not NULL, will stop player from having same name as otherPlayer
  */
 void askPlayerForName(Player *player, Player *otherPlayer) {
-
+    clrscr();
+    printTitle();
     while (1) {
         //Asks player for their name
         printCentered('-', "Please enter your name: ");
@@ -48,11 +50,20 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
     }
 }
 
+/**
+ * \relates Player
+ * Asks a player what colour they want.<br>
+ * If otherPlayer is not NULL, player won't be allowed to choose the same colour
+ * @param player The player being asked for colour
+ * @param otherPlayer Other player. Both players can't have the same colour
+ */
 void askPlayerForColour(Player *player, Player *otherPlayer) {
-    printCentered('-', "Select your colour [index]:");
+    clrscr();
+    printTitle();
+    printCentered('-', "%s, please select your colour [index]:", player->name);
     for (int index = 1; index < 6; index++) {
         if (otherPlayer == NULL || index != (int)otherPlayer->colour)
-            printf("\t\t\t%d) %s\n", index, colours[index]);
+            printf("\t\t\t%d) %s\n", index, colourStrings[index]);
     }
 
     int colourValue;
@@ -61,8 +72,9 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
         printf("\t> ");
         colourValue = getchar() - '0';
 
-        while ((getchar() != '\n'));
+        while ((getchar() != '\n')); //Consuming extra input
 
+        //Error handling
         if (otherPlayer != NULL && colourValue == otherPlayer->colour)
             printCentered(' ', "Both players can't have the same colour");
         else if (colourValue < 1 || colourValue > 6)
@@ -73,10 +85,14 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
         printCentered('-', "Select your colour [index]:");
     }
 
+    //Setting the colour value
     player->colour = (Colour)colourValue;
 }
 
 void printBoard(Game *game, Cell *selectedCell) {
+
+    clrscr();
+
     Cell *cell;
     char colourLetter;
     int cellY;
@@ -87,10 +103,9 @@ void printBoard(Game *game, Cell *selectedCell) {
     char stackString[5];
     int strIndex;
 
+    //Looping through every line of the board
     for (int pixelY = 0; pixelY < 34; pixelY++) {
-
-
-        //Printing cell details
+        //Printing cell details if middle of cell reached
         if (pixelY % 4 == 3) {
             // signifies whether the first piece in a row has been printed
             // The first cell prints "|   |"
@@ -120,13 +135,15 @@ void printBoard(Game *game, Cell *selectedCell) {
                     strIndex = 0;
 
                     tempPiece = cell->head;
+                    //Converting stack into a string
                     while (tempPiece != NULL) {
-                        colourLetter = colours[(int)tempPiece->owner->colour][0];
+                        colourLetter = colourStrings[(int)tempPiece->owner->colour][0];
                         stackString[strIndex++] = colourLetter;
                         tempPiece = tempPiece->next;
                     }
-
                     stackString[strIndex] = '\0';
+
+                    //Printing stack info
                     printf("%s%c%5s%c│",
                             printedFirst ? "" : "│",
                            cell == selectedCell ? '[' : ' ',
@@ -139,11 +156,20 @@ void printBoard(Game *game, Cell *selectedCell) {
             }
             printf("\n");
         } else {
+
+            //Print default board line if not middle of cell
             printf("   %s\n", boardString[pixelY]);
+
         }
     }
 }
 
+/**
+ * Print's a formatted string, centered, using the paddingChar either side
+ * @param paddingChar The character to use for padding either side
+ * @param format Format string
+ * @param ... Format string arguments
+ */
 static void printCentered(char paddingChar, const char *format, ...) {
     char temp[128];
 
@@ -169,10 +195,31 @@ static void printCentered(char paddingChar, const char *format, ...) {
     printf("\n");
 }
 
+/**
+ * Prints a seperator using '-'
+ */
 static void printSeparator(void) {
     printCentered('-', "");
 }
 
+/**
+ * \relates Game
+ * \relates Cell
+ * Allows players to select a cell on the game board.<br>
+ * If source is NULL. Player will be asked whether to move the stack or place a piece<br>
+ * In that case, placeReservedPiece will be set to true is player wants to place a piece.
+ * Must not be NULL in that case<br>
+ * maxDist only used if sourceCell is not NULL. maxDist specifies the maximum
+ * (taxicab) distance sourceCell can be from selected cell
+ * \section
+ * selectCell(game, NULL, bool*, 0) means asking for source<br>
+ * selectCell(game, Cell*, NULL, int) means asking for destination<br>
+ * @param game Game instance
+ * @param sourceCell If asking for destination, the source cell asked previously.
+ * @param placeReservedPiece If asking for source, will be set to true if player decided to place deserved piece
+ * @param maxDist IF asking for destination. The max distance allowed from source cell
+ * @return
+ */
 Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist) {
     char temp[32];
     unsigned int cellX, cellY, sscanfreturn, distance;
@@ -185,7 +232,7 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
 
     printBoard(game, sourceCell);
     if (sourceCell == NULL) {
-        printCentered('-', "%s's Move (%s)", currentPlayer->name, colours[(int)currentPlayer->colour]);
+        printCentered('-', "%s's Move (%s)", currentPlayer->name, colourStrings[(int)currentPlayer->colour]);
         printCentered(' ', "You have %d pieces reserved.", currentPlayer->reservedCounter);
         printCentered(' ', "%s has %d pieces reserved", opponentPlayer->name, opponentPlayer->reservedCounter);
     } else {
@@ -195,13 +242,14 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
     }
 
     while (true) {
+
+        //Error messages
         if (strlen(message) != 0) {
             printBoard(game, sourceCell);
             printSeparator();
             printCentered(' ', message);
             printf("\n");
         }
-
 
         printCentered(' ', "Please select cell (x & y separated by space");
         printf("\t> ");
@@ -237,6 +285,16 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
 
 }
 
+/**
+ * \realtes Game
+ * Asks user whether to move, place, or go back
+ * @param game Game instance
+ * @param cell The cell currently selected
+ * @param message Message to print to the screen
+ * @param currentPlayer The player being asked the action
+ * @param placeReservedPiece Will be set to true if player decided to place reserved pieces
+ * @return boolean of whether player has chosen an action (true) or to go back (false)
+ */
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece) {
     char temp[64];
 
@@ -271,6 +329,12 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
     return false;
 }
 
+/**
+ * Asks the player how many pieces to move
+ * @param game Game instance
+ * @param source The cell being moved
+ * @return The number of pieces. 1 <= return <= source->length
+ */
 unsigned int askCount(Game *game, Cell *source) {
     if (source->length == 1) {
         return 1;
@@ -299,6 +363,11 @@ unsigned int askCount(Game *game, Cell *source) {
     }
 }
 
+/**
+ * Prints the game winner
+ * @param game Game instance
+ * @param player The player who won
+ */
 void printWinner(Game *game, Player *player) {
     printBoard(game, NULL);
     printSeparator();
