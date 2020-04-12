@@ -2,12 +2,7 @@
 // Created by nskobelevs on 25/03/2020.
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
 #include "init.h"
-#include "gui.h"
 
 static Player *initialisePlayer(unsigned int playerIndex, Player *otherPlayer);
 
@@ -34,21 +29,20 @@ static Player *initialisePlayer(unsigned int playerIndex, Player *otherPlayer) {
  */
 Game *initialiseGame(void) {
 
-    //COLOR_BLACK is the default terminal background
-//    init_pair(RED, COLOR_RED, COLOR_BLACK);
-//    init_pair(GREEN, COLOR_GREEN, COLOR_BLACK);
-//    init_pair(YELLOW, COLOR_YELLOW, COLOR_BLACK);
-//    init_pair(BLUE, COLOR_BLUE, COLOR_BLACK);
-//    init_pair(MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-//    init_pair(CYAN, COLOR_CYAN, COLOR_BLACK);
-//    init_pair(BLANK, COLOR_WHITE, COLOR_BLACK);
+    //If building curses version
+    if (usingCurses) {
+        initCurses();
+    }
 
     Game *game = (Game *) malloc(sizeof(*game));
+
+    printTitle();
+
 
     //Initialising both players
     Player *player1 = initialisePlayer(1, NULL);
     Player *player2 = initialisePlayer(2, player1);
-
+    exit(1);
     game->players[0] = player1;
     game->players[1] = player2;
     game->moveIndex = 0;
@@ -143,4 +137,9 @@ void freeBoard(Game *game) {
 
     //Free game itself
     free(game);
+
+    //If building curses version
+    if (usingCurses) {
+        endCurses();
+    }
 }

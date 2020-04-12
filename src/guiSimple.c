@@ -2,12 +2,9 @@
 // Created by Nikita Skobelevs on 09/04/2020.
 //
 
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdarg.h>
 #include "gui.h"
-#include "gameLogic.h"
+
+bool usingCurses = false;
 
 #define printWidth 68
 
@@ -15,50 +12,17 @@ static void printCentered(char paddingChar, const char *format, ...);
 static void printSeparator(void);
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
 
-static const char *colours[] = {
-        "",
-        "Red",
-        "Green",
-        "Yellow",
-        "Blue",
-        "Magenta",
-        };
+//Only used for curses build. Defined in guiCurses.c
+void initCurses(void) {}
+void endCurses(void) {}
 
-const char *boardString[] = {
-        "    0       1       2       3       4       5       6       7    ",
-        "                ┌───────┬───────┬───────┬───────┐                ",
-        "                │       │       │       │       │                ",
-        "                │       │       │       │       │                ",
-        "                │       │       │       │       │                ",
-        "        ┌───────┼───────┼───────┼───────┼───────┼───────┐        ",
-        "        │       │       │       │       │       │       │        ",
-        "        │       │       │       │       │       │       │        ",
-        "        │       │       │       │       │       │       │        ",
-        "┌───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┐",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "├───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┤",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "├───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┤",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "├───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┤",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "│       │       │       │       │       │       │       │       │",
-        "└───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┘",
-        "        │       │       │       │       │       │       │        ",
-        "        │       │       │       │       │       │       │        ",
-        "        │       │       │       │       │       │       │        ",
-        "        └───────┼───────┼───────┼───────┼───────┼───────┘        ",
-        "                │       │       │       │       │                ",
-        "                │       │       │       │       │                ",
-        "                │       │       │       │       │                ",
-        "                └───────┴───────┴───────┴───────┘                "};
+void printTitle(void) {
+    unsigned int titleLines = sizeof(titleString) / sizeof(*titleString);
+    for (int i = 0; i < titleLines; i++) {
+        printCentered(' ', titleString[i]);
+    }
+    printf("\n");
+}
 
 /**
  * \relates Player
@@ -69,7 +33,7 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
 
     while (1) {
         //Asks player for their name
-        printCentered(' ', "Please enter your name: ");
+        printCentered('-', "Please enter your name: ");
         printf("\t> ");
         fgets(player->name, sizeof(player->name), stdin);
 

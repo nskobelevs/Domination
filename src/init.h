@@ -5,6 +5,11 @@
 #ifndef DOMINATION_INIT_H
 #define DOMINATION_INIT_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include "gui.h"
 #include "components.h"
 
 Game *initialiseGame(void);

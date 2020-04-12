@@ -5,6 +5,12 @@
 #ifndef DOMINATION_GAMELOGIC_H
 #define DOMINATION_GAMELOGIC_H
 
+#include <assert.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include "gui.h"
 #include "components.h"
 
 void runGame(Game *game);

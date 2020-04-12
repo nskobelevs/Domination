@@ -1,15 +1,7 @@
 //
 // Created by nskobelevs on 26/03/2020.
 //
-
-#include <assert.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
 #include "gameLogic.h"
-#include "gui.h"
-
 
 static bool playerCanMakeMove(Game *game, Player *player);
 static void shortenCell(Cell *cell);
