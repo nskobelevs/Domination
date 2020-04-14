@@ -5,12 +5,32 @@
 static void printCentered(char paddingChar, const char *format, ...);
 static void printSeparator(void);
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
+static void clear(void);
 
-//Uses clrscr() in conio to clear screen in Windows. Else uses ANSI escape characters
+//Because Windows is annoying and doesn't support ANSI escape sequences
 #ifdef _WIN32
-    #include <conio.h>
+#include <windows.h>
+/* SOURCE: https://stackoverflow.com/a/6487534 */
+    static void clear(void) {
+        COORD topLeft  = { 0, 0 };
+        HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO screen;
+        DWORD written;
+
+        GetConsoleScreenBufferInfo(console, &screen);
+        FillConsoleOutputCharacterA(
+                console, ' ', screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+        );
+        FillConsoleOutputAttribute(
+                console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE,
+                screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+        );
+        SetConsoleCursorPosition(console, topLeft);
+    }
 #else
-    #define clrscr() printf("\033[H\033[J");
+    static void clear(void) {
+        printf("\033[H\033[J");
+    }
 #endif
 
 /**
@@ -18,7 +38,7 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
  */
 void printTitle(void) {
     unsigned int titleLines = sizeof(titleString) / sizeof(*titleString);
-    clrscr();
+    clear();
     for (int i = 0; i < titleLines; i++) {
         printCentered(' ', titleString[i]);
     }
@@ -35,7 +55,7 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
     LOG("INFO: %s(%p, %p) called\n", __func__, player, otherPlayer);
 #endif
 
-    clrscr();
+    clear();
     printTitle();
     while (1) {
         //Asks player for their name
@@ -75,7 +95,7 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
     LOG("INFO: %s(%p, %p) called\n", __func__, player, otherPlayer);
 #endif
 
-    clrscr();
+    clear();
     printTitle();
     printCentered('-', "%s, please select your colour [index]:", player->name);
     for (int index = 1; index < 7; index++) {
@@ -121,7 +141,13 @@ void printBoard(Game *game, Cell *selectedCell) {
     LOG("INFO: %s(%p, %p) called\n", __func__, game, selectedCell);
 #endif
 
-    clrscr();
+#ifdef __WIN32__
+    char *bar = "|";
+#else
+    char *bar = "│";
+#endif
+
+    clear();
 
     Cell *cell;
     char colourLetter;
@@ -159,7 +185,7 @@ void printBoard(Game *game, Cell *selectedCell) {
 
                 //Cell contains no pieces
                 if (cell->head == NULL) {
-                    printf("%s       │", printedFirst ? "" : "│");
+                    printf("%s       %s", printedFirst ? "" : bar, bar);
                 } else {
 
                     strIndex = 0;
@@ -174,11 +200,12 @@ void printBoard(Game *game, Cell *selectedCell) {
                     stackString[strIndex] = '\0';
 
                     //Printing stack info
-                    printf("%s%c%5s%c│",
-                            printedFirst ? "" : "│",
+                    printf("%s%c%5s%c%s",
+                            printedFirst ? "" : bar,
                            cell == selectedCell ? '[' : ' ',
                             stackString,
-                           cell == selectedCell ? ']' : ' '
+                           cell == selectedCell ? ']' : ' ',
+                           bar
                             );
                 }
                 printedFirst = true;
