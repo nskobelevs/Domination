@@ -4,7 +4,7 @@
  * Opens the log file
  */
 void initLog(void) {
-    logFile = fopen("debug.log", "a");
+    logFile = fopen("domination.log", "a");
 }
 
 /*

@@ -31,6 +31,7 @@ static const char *colourStrings[] = {
         "Yellow",
         "Blue",
         "Magenta",
+        "Cyan"
 };
 
 static const Colour colours[] = {

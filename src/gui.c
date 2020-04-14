@@ -41,7 +41,13 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
         //Asks player for their name
         printCentered('-', "Please enter your name: ");
         printf("\t> ");
-        fgets(player->name, sizeof(player->name), stdin);
+        if (fgets(player->name, sizeof(player->name), stdin) == NULL) {
+#ifdef DEBUG
+            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
+#endif
+            fprintf(stderr, "Error reading input\n");
+            exit(1);
+        }
 
         //Cut of \n at the end
         player->name[strlen(player->name) - 1] = '\0';
@@ -72,7 +78,7 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
     clrscr();
     printTitle();
     printCentered('-', "%s, please select your colour [index]:", player->name);
-    for (int index = 1; index < 6; index++) {
+    for (int index = 1; index < 7; index++) {
         if (otherPlayer == NULL || index != (int)otherPlayer->colour)
             printf("\t\t\t%d) %s\n", index, colourStrings[index]);
     }
@@ -88,7 +94,7 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
         //Error handling
         if (otherPlayer != NULL && colourValue == otherPlayer->colour)
             printCentered(' ', "Both players can't have the same colour");
-        else if (colourValue < 1 || colourValue > 6)
+        else if (colourValue < 1 || colourValue > 7)
             printCentered(' ', "Colour index out of range");
         else
             break;
@@ -195,10 +201,6 @@ void printBoard(Game *game, Cell *selectedCell) {
  * @param ... Format string arguments
  */
 static void printCentered(char paddingChar, const char *format, ...) {
-#ifdef DEBUG
-    LOG("INFO: %s(\'%c\', \"%s\", ...) called\n", __func__, paddingChar, format);
-#endif
-
     char temp[128];
 
     va_list arg;
@@ -227,9 +229,6 @@ static void printCentered(char paddingChar, const char *format, ...) {
  * Prints a separator using '-'
  */
 static void printSeparator(void) {
-#ifdef DEBUG
-    LOG("INFO: %s() called\n", __func__);
-#endif
     printCentered('-', "");
 }
 
@@ -289,7 +288,13 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
 
         printCentered(' ', "Please select cell (x & y separated by space");
         printf("\t> ");
-        fgets(temp, sizeof(temp), stdin);
+        if( fgets(temp, sizeof(temp), stdin) == NULL) {
+#ifdef DEBUG
+            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
+#endif
+            fprintf(stderr, "Error reading input\n");
+            exit(1);
+        }
         sscanfreturn = sscanf(temp, "%d %d", &cellX, &cellY);
 
         //Cells outside the board
@@ -345,7 +350,13 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
     printCentered(' ', "What would you like to do?");
     printCentered(' ', "[move] pieces / [place] reserved piece / go [back]");
     printf("\t> ");
-    fgets(temp, sizeof(temp), stdin);
+    if (fgets(temp, sizeof(temp), stdin) == NULL) {
+#ifdef DEBUG
+        LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
+#endif
+        fprintf(stderr, "Error reading input\n");
+        exit(1);
+    }
 
     if (strncmp(temp, "move", 4) == 0) {
         if (cell->head->owner != currentPlayer) {
@@ -411,7 +422,13 @@ unsigned int askCount(Game *game, Cell *source) {
         printCentered(' ', "How many do you want to move?");
         printf("\n\t> ");
 
-        fgets(temp, sizeof(temp), stdin);
+        if (fgets(temp, sizeof(temp), stdin) == NULL) {
+#ifdef DEBUG
+            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
+#endif
+            fprintf(stderr, "Error reading input\n");
+            exit(1);
+        }
         sscanfReturn = sscanf(temp, "%d", &count);
 
 #ifdef DEBUG

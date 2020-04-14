@@ -9,7 +9,9 @@ static Player *initialisePlayer(Player *otherPlayer);
  * @return A pointer to the initialised player
  */
 static Player *initialisePlayer(Player *otherPlayer) {
+#ifdef DEBUG
     LOG("INFO: %s(%p) called\n", __func__, otherPlayer);
+#endif
 
     Player *player = (Player *) malloc(sizeof(Player));
 
@@ -37,7 +39,9 @@ static Player *initialisePlayer(Player *otherPlayer) {
  * @return The game variables
  */
 Game *initialiseGame(void) {
+#ifdef DEBUG
     LOG("INFO: %s() called\n", __func__);
+#endif
 
     //Allocating memory for board
     Game *game = (Game *) malloc(sizeof(*game));
@@ -66,9 +70,9 @@ Game *initialiseGame(void) {
 #endif
 
     //Squared distance from the centre of the board to the cell being created
-    double squaredDistance;
+    double squaredDistance = 0;
 
-    Cell *cell;
+    Cell *cell = NULL;
 
     //Fill the board with empty stacks
     for (int rowIndex = 0; rowIndex < 8; rowIndex++) {
@@ -106,8 +110,8 @@ Game *initialiseGame(void) {
         }
     }
 
-    Piece *piece;
-    int cellIndex;
+    Piece *piece = NULL;
+    int cellIndex = 0;
     //Setting the inner 6x6 grid with pieces
     for (int rowIndex = 0; rowIndex < 6; rowIndex++) {
         for (int columnIndex = 0; columnIndex < 6; columnIndex++) {
@@ -160,9 +164,9 @@ void freeBoard(Game *game) {
     LOG("INFO: %s(%p) called\n", __func__, game);
 #endif
 
-    Cell *stack;
-    Piece *piece;
-    Piece *temp;
+    Cell *stack = NULL;
+    Piece *piece = NULL;
+    Piece *temp = NULL;
 
     //Looping through the 8x8 board
     for (int rowIndex = 0; rowIndex < 8; rowIndex++) {

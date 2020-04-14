@@ -143,11 +143,13 @@ static void shortenCell(Cell *cell) {
 
     //The player who own's the stack
     Player *player = cell->head->owner;
+
     //newTail is the 5th piece;
     Piece *newTail = cell->head->next->next->next->next;
 
+    //Used for looping
     Piece *piece = newTail->next;
-    Piece *temp = piece;
+    Piece *current = NULL;
 
     //Looping until the bottom of the stack
     while (piece != NULL) {
@@ -155,11 +157,11 @@ static void shortenCell(Cell *cell) {
             //Increases the amount of pieces a player has reserved
             player->reservedCounter++;
         }
-        temp = piece;
+        current = piece;
         piece = piece->next;
 
         //Free's pieces that aren't currently in game
-        free(temp);
+        free(current);
     }
 
     //Setting the new tail and stopping tail from pointing to free'd memory
