@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 /**
+ * \brief
  * An enum to store the colour of a player<br>
  * 1-based indexing due to having to use it in <i>color_pair</i> which can't use 0 as index
  */
@@ -13,7 +14,7 @@ typedef enum {
 
 
 /**
- * Represents a player in the game
+ * \brief Represents a player in a game
  */
 typedef struct {
     char name[24]; //!< The player name
@@ -22,15 +23,15 @@ typedef struct {
 } Player;
 
 /**
- * Represents a single game piece
+ * \brief Represents a single game piece
  */
-typedef struct _piece {
+typedef struct Piece {
     Player *owner; //!< A pointer to the player that own's the piece
-    struct _piece *next; //!< A pointer to the piece below it. NULL if this is the bottom-most piece
+    struct Piece *next; //!< A pointer to the piece below it. NULL if this is the bottom-most piece
 } Piece;
 
 /**
- * Represents a cell on the 8x8 game board
+ * \brief Represents a cell on the 8x8 game board
  */
 typedef struct {
     Piece *head; //!< Pointer to the top-most piece in that cell
@@ -41,7 +42,7 @@ typedef struct {
 } Cell;
 
 /**
- * Represents an instance of the game
+ * \brief Represents an instance of the game
  */
 typedef struct {
     Player *players[2]; //!< Pointers to player1 and player2

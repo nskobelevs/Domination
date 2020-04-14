@@ -1,13 +1,32 @@
-//
-// Created by nskobelevs on 26/03/2020.
-//
 #include "gameLogic.h"
 
 static bool playerCanMakeMove(Game *game, Player *player);
 static void shortenCell(Cell *cell);
 
+/**
+ * \relates Cell
+ * \relates Game
+ * Creates a new piece owned by player and places it on top of cell
+ * @param cell The cell where to place the new cell
+ * @param player The player which will own the cell
+ */
 static void placePiece(Cell *cell, Player *player) {
+
+#ifdef DEBUG
+    LOG("INFO: %s(%p, %p) called\n", __func__, cell, player);
+#endif
+
     Piece *piece = (Piece *)malloc(sizeof(*piece));
+
+    if (piece == NULL) {
+
+#ifdef DEBUG
+        LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
+#endif
+
+        fprintf(stderr, "Unable to allocate memory for a piece\n");
+        exit(EXIT_FAILURE);
+    }
 
     player->reservedCounter--;
 
@@ -28,6 +47,16 @@ static void placePiece(Cell *cell, Player *player) {
  * @param count How many pieces to move<br>
  */
 void movePieces(Cell *source, Cell *destination, unsigned int count) {
+
+#ifdef DEBUG
+    LOG("INFO: %s(%p, %p, %u) called\n", __func__, source, destination, count);
+    LOG("INFO: moving %d pieces from (%d, %d) to (%d, %d)\n",
+            count, source->columnIndex, source->rowIndex, destination->columnIndex, destination->rowIndex);
+    LOG("INFO: source @ %p, source->head @ %p, source->tail @ %p, source->length: %u\n",
+            source, source->head, source->tail, source->length);
+    LOG("INFO: destination @ %p, destination->head @ %p, destination->tail @ %p, destination->length: %u\n",
+            destination, destination->head, destination->tail, destination->length);
+#endif
 
     //Basic assumptions
     assert(count <= source->length);
@@ -104,6 +133,12 @@ void movePieces(Cell *source, Cell *destination, unsigned int count) {
  */
 static void shortenCell(Cell *cell) {
 
+#ifdef DEBUG
+    LOG("INFO: %s(%p) called\n", __func__, cell);
+    LOG("cell @ %p, cell->head @ %p, cell->tail @ %p, cell->length = %d\n",
+        cell, cell->head, cell->tail, cell->length);
+#endif
+
     assert(cell->length > 5);
 
     //The player who own's the stack
@@ -141,6 +176,9 @@ static void shortenCell(Cell *cell) {
  * @return |cell1.rowIndex - cell2.rowIndex| + |cell1.columnIndex - cell2.columnIndex|
  */
 unsigned  getDistance(Cell *cell1, Cell *cell2) {
+#ifdef DEBUG
+    LOG("INFO: %s(%p, %p) called\n", __func__, cell1, cell2);
+#endif
     return abs(cell1->rowIndex - cell2->rowIndex) + abs(cell1->columnIndex - cell2->columnIndex);
 }
 
@@ -151,6 +189,10 @@ unsigned  getDistance(Cell *cell1, Cell *cell2) {
  */
 void runGame(Game *game) {
 
+#ifdef DEBUG
+    LOG("INFO: %s(%p) called\n", __func__, game);
+#endif
+
     Cell *source, *destination;
     bool placeReservedPiece = false;
     Player *currentPlayer, *otherPlayer;
@@ -159,12 +201,31 @@ void runGame(Game *game) {
     while (true) {
         currentPlayer = game->players[game->moveIndex % 2];
         otherPlayer = game->players[(game->moveIndex + 1) % 2];
+
+#ifdef DEBUG
+        LOG("INFO: moveIndex: %d, player1 @ %p, player2 @ %p\n", game->moveIndex, currentPlayer, otherPlayer);
+#endif
+
         source = selectCell(game, NULL, &placeReservedPiece, 0);
+
+
+#ifdef DEBUG
+        LOG("INFO: player @ %p selected cell @ %p, decided to place?: %s\n",
+                currentPlayer, source, placeReservedPiece ? "true" : "false");
+#endif
+
         if (placeReservedPiece) {
             placePiece(source, currentPlayer);
         } else {
             count = askCount(game, source);
             destination = selectCell(game, source, NULL, count);
+
+
+#ifdef DEBUG
+            LOG("INFO: player @ %p selected cell @ %p, decided to place?: %s\n",
+                currentPlayer, source, placeReservedPiece ? "true" : "false");
+#endif
+
             movePieces(source, destination, count);
         }
 
@@ -185,6 +246,11 @@ void runGame(Game *game) {
  * @return bool signifying whether player can move
  */
 static bool playerCanMakeMove(Game *game, Player *player) {
+
+#ifdef DEBUG
+    LOG("INFO: %s(%p, %p) called\n", __func__, game, player);
+#endif
+
     Cell *cell;
 
     //Looping through cell grid
@@ -197,8 +263,14 @@ static bool playerCanMakeMove(Game *game, Player *player) {
                 continue;
 
             //If stack is owned by player, they can make a valid move
-            if (cell->head->owner == player)
+            if (cell->head->owner == player) {
+
+#ifdef DEBUG
+                LOG("INFO: cell (%d, %d) @ %p owned by player @ %p\n",
+                        cell->columnIndex, cell->rowIndex, player);
+#endif
                 return true;
+            }
         }
     }
 
