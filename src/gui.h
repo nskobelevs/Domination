@@ -6,8 +6,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <wchar.h>
-#include "log.h"
 #include "gameLogic.h"
 #include "components.h"
 

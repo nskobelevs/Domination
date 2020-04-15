@@ -51,10 +51,6 @@ void printTitle(void) {
  * @param otherPlayer If not NULL, will stop player from having same name as otherPlayer
  */
 void askPlayerForName(Player *player, Player *otherPlayer) {
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, player, otherPlayer);
-#endif
-
     clear();
     printTitle();
     while (1) {
@@ -62,19 +58,12 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
         printCentered('-', "Please enter your name: ");
         printf("\t> ");
         if (fgets(player->name, sizeof(player->name), stdin) == NULL) {
-#ifdef DEBUG
-            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
-#endif
             fprintf(stderr, "Error reading input\n");
             exit(1);
         }
 
         //Cut of \n at the end
         player->name[strlen(player->name) - 1] = '\0';
-
-#ifdef DEBUG
-        LOG("Player input: \"%s\" (%d)\n", player->name, strlen(player->name));
-#endif
         //Checking names aren't the same
         if (otherPlayer != NULL && strcmp(player->name, otherPlayer->name) == 0)
             printCentered('-', "Both players can't have the same name");
@@ -91,10 +80,6 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
  * @param otherPlayer Other player. Both players can't have the same colour
  */
 void askPlayerForColour(Player *player, Player *otherPlayer) {
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, player, otherPlayer);
-#endif
-
     clear();
     printTitle();
     printCentered('-', "%s, please select your colour [index]:", player->name);
@@ -124,10 +109,6 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
 
     //Setting the colour value
     player->colour = (Colour)colourValue;
-
-#ifdef DEBUG
-    LOG("INFO: player @ %p, player->colorValue = %d\n", player, (int)player->colour);
-#endif
 }
 
 /**
@@ -136,15 +117,10 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
  * @param selectedCell Pointer to a cell to be highlight
  */
 void printBoard(Game *game, Cell *selectedCell) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, game, selectedCell);
-#endif
-
 #ifdef __WIN32__
-    char *bar = "|";
+    char *bar = "|"; // pipe character
 #else
-    char *bar = "│";
+    char *bar = "│"; //Unicode character for a full height bar.
 #endif
 
     clear();
@@ -278,11 +254,6 @@ static void printSeparator(void) {
  * @return
  */
 Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p, %p, %d) called\n", __func__, game, sourceCell, placeReservedPiece, maxDist);
-#endif
-
     char temp[32];
     unsigned int cellX, cellY, sscanfreturn, distance;
     Cell *cell;
@@ -316,9 +287,6 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
         printCentered(' ', "Please select cell (x & y separated by space");
         printf("\t> ");
         if( fgets(temp, sizeof(temp), stdin) == NULL) {
-#ifdef DEBUG
-            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
-#endif
             fprintf(stderr, "Error reading input\n");
             exit(1);
         }
@@ -364,11 +332,6 @@ Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigne
  * @return boolean of whether player has chosen an action (true) or to go back (false)
  */
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p %p, %s, %p, %p) called\n", __func__, game, cell, message, currentPlayer, placeReservedPiece);
-#endif
-
     char temp[64];
 
     printBoard(game, cell);
@@ -378,9 +341,6 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
     printCentered(' ', "[move] pieces / [place] reserved piece / go [back]");
     printf("\t> ");
     if (fgets(temp, sizeof(temp), stdin) == NULL) {
-#ifdef DEBUG
-        LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
-#endif
         fprintf(stderr, "Error reading input\n");
         exit(1);
     }
@@ -390,9 +350,6 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
             strcpy(message, "You can't move your opponent's stack");
         } else {
             *placeReservedPiece = false;
-#ifdef DEBUG
-            LOG("INFO: player @ %p selected to move\n", __func__, currentPlayer);
-#endif
             return true;
         }
     } else if (strncmp(temp, "place", 5) == 0) {
@@ -400,23 +357,12 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
             strcpy(message, "You don't have any reserved piece");
         } else {
             *placeReservedPiece = true;
-#ifdef DEBUG
-            LOG("INFO: player @ %p selected to place\n", __func__, currentPlayer);
-#endif
             return true;
         }
     } else if (strncmp(temp, "back", 4) == 0) {
         strcpy(message, "Going back..");
-
-#ifdef DEBUG
-        LOG("INFO: player @ %p selected back\n", __func__, currentPlayer);
-#endif
-
     } else {
         strcpy(message, "Invalid choice");
-#ifdef DEBUG
-        LOG("INFO: player @ %p selected an invalid option\n", __func__, currentPlayer);
-#endif
     }
 
     return false;
@@ -429,11 +375,6 @@ static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlay
  * @return The number of pieces. 1 <= return <= source->length
  */
 unsigned int askCount(Game *game, Cell *source) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%[p, %p) called\n", __func__, game, source);
-#endif
-
     if (source->length == 1) {
         return 1;
     }
@@ -450,17 +391,10 @@ unsigned int askCount(Game *game, Cell *source) {
         printf("\n\t> ");
 
         if (fgets(temp, sizeof(temp), stdin) == NULL) {
-#ifdef DEBUG
-            LOG("INFO: %s:%u fgets() failed. Exiting...\n", __FILE__, __LINE__);
-#endif
             fprintf(stderr, "Error reading input\n");
             exit(1);
         }
         sscanfReturn = sscanf(temp, "%d", &count);
-
-#ifdef DEBUG
-        LOG("INFO: player input: sscanfReturn: %u, count: %d\n", __func__, sscanfReturn, count);
-#endif
 
         if (sscanfReturn != 1 || count < 1 || count > source->length) {
             strcpy(message, "Not a valid amount");
@@ -479,11 +413,6 @@ unsigned int askCount(Game *game, Cell *source) {
  * @param player The player who won
  */
 void printWinner(Game *game, Player *player) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, game, player);
-#endif
-
     printBoard(game, NULL);
     printSeparator();
     printCentered(' ', "Congratulations!");

@@ -9,20 +9,10 @@ static Player *initialisePlayer(Player *otherPlayer);
  * @return A pointer to the initialised player
  */
 static Player *initialisePlayer(Player *otherPlayer) {
-#ifdef DEBUG
-    LOG("INFO: %s(%p) called\n", __func__, otherPlayer);
-#endif
-
     Player *player = (Player *) malloc(sizeof(Player));
 
     //If malloc fails
     if (player == NULL) {
-
-#ifdef DEBUG
-        LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
-        endLog();
-#endif
-
         fprintf(stderr, "Unable to allocate memory for a player");
         exit(1);
     }
@@ -39,20 +29,11 @@ static Player *initialisePlayer(Player *otherPlayer) {
  * @return The game variables
  */
 Game *initialiseGame(void) {
-#ifdef DEBUG
-    LOG("INFO: %s() called\n", __func__);
-#endif
-
     //Allocating memory for board
     Game *game = (Game *) malloc(sizeof(*game));
 
     //In the rare case that malloc fails
     if (game == NULL) {
-
-#ifdef DEBUG
-      LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
-      endLog();
-#endif
         fprintf(stderr, "Unable to allocate memory for the game\n");
         exit(EXIT_FAILURE);
     }
@@ -64,10 +45,6 @@ Game *initialiseGame(void) {
     game->players[0] = player1;
     game->players[1] = player2;
     game->moveIndex = 0;
-
-#ifdef DEBUG
-    LOG("INFO: game @ %p, game->player1 @ %p, game->player2 @ %p, game->?moveIndex = %d\n", game, game->players[0], game->players[1], game->moveIndex);
-#endif
 
     //Squared distance from the centre of the board to the cell being created
     double squaredDistance = 0;
@@ -88,10 +65,6 @@ Game *initialiseGame(void) {
             //Allocating memory
             cell = (Cell *)malloc(sizeof(Cell));
             if (cell == NULL) {
-
-#ifdef DEBUG
-                LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
-#endif
                 fprintf(stderr, "Error allocating memory for a cell\n");
                 exit(EXIT_FAILURE);
             }
@@ -103,10 +76,6 @@ Game *initialiseGame(void) {
             cell->rowIndex = rowIndex;
             cell->columnIndex = columnIndex;
             game->cells[rowIndex][columnIndex] = cell;
-#ifdef DEBUG
-            LOG("INFO: cell (%d,%d) @ %p, cell->head @ %p, cell->tail @ %p, cell->length = %u\n",
-                    columnIndex, rowIndex, cell, cell->head, cell->tail, cell->length);
-#endif
         }
     }
 
@@ -117,13 +86,8 @@ Game *initialiseGame(void) {
         for (int columnIndex = 0; columnIndex < 6; columnIndex++) {
             piece = (Piece *) malloc(sizeof(Piece));
             if (piece == NULL) {
-
-#ifdef DEBUG
-            LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
-#endif
-
-            fprintf(stderr, "Error allocating memory for game piece\n");
-            exit(1);
+                fprintf(stderr, "Error allocating memory for game piece\n");
+                exit(1);
             }
             piece->next = NULL;
 
@@ -134,20 +98,11 @@ Game *initialiseGame(void) {
             else
                 piece->owner = game->players[1];
 
-#ifdef DEBUG
-            LOG("INFO: piece @ %p, piece->next @ %p, piece->owner @ %p\n", piece, piece->next, piece->owner);
-#endif
-
             cell = game->cells[rowIndex + 1][columnIndex + 1];
 
             cell->head = piece;
             cell->tail = piece;
             cell->length = 1;
-
-#ifdef DEBUG
-            LOG("INFO: cell (%d,%d) @ %p, cell->head @ %p, cell->tail @ %p, cell->length = %u\n",
-                columnIndex, rowIndex, cell, cell->head, cell->tail, cell->length);
-#endif
         }
     }
 
@@ -160,10 +115,6 @@ Game *initialiseGame(void) {
  * @param game Game instance
  */
 void freeBoard(Game *game) {
-#ifdef DEBUG
-    LOG("INFO: %s(%p) called\n", __func__, game);
-#endif
-
     Cell *stack = NULL;
     Piece *piece = NULL;
     Piece *temp = NULL;
@@ -179,36 +130,16 @@ void freeBoard(Game *game) {
                 while (piece != NULL) {
                     temp = piece;
                     piece = piece->next;
-#ifdef DEBUG
-                    LOG("INFO: piece @ %p free'd\n", piece);
-#endif
                     //Freeing the pieces
                     free(temp);
                 }
-
-#ifdef DEBUG
-                LOG("INFO: stack @ %p free'd\n", stack);
-#endif
-
-
                 free(stack); //Free the stack itself
             }
         }
     }
-
-#ifdef DEBUG
-    LOG("INFO: player @ %p free'd\n", game->players[0]);
-    LOG("INFO: player @ %p free'd\n", game->players[1]);
-#endif
-
     //Free both players
     free(game->players[0]);
     free(game->players[1]);
-
-#ifdef DEBUG
-    LOG("INFO: game @ %p free'd\n", game);
-#endif
-
     //Free game itself
     free(game);
 

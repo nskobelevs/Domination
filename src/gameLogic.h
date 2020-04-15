@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include "log.h"
 #include "gui.h"
 #include "components.h"
 
