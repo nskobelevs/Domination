@@ -17,7 +17,7 @@ void askPlayerForColour(Player *player, Player *otherPlayer);
 
 void printBoard(Game *game, Cell *selectedCell);
 
-Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist);
+Cell *askUserForCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist);
 
 unsigned int askCount(Game *game, Cell *source);
 

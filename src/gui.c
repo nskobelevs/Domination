@@ -5,13 +5,13 @@
 static void printCentered(char paddingChar, const char *format, ...);
 static void printSeparator(void);
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
-static void clear(void);
+static void clearConsole(void);
 
 //Because Windows is annoying and doesn't support ANSI escape sequences
 #ifdef _WIN32
 #include <windows.h>
 /* SOURCE: https://stackoverflow.com/a/6487534 */
-    static void clear(void) {
+    static void clearConsole(void) {
         COORD topLeft  = { 0, 0 };
         HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO screen;
@@ -28,7 +28,7 @@ static void clear(void);
         SetConsoleCursorPosition(console, topLeft);
     }
 #else
-    static void clear(void) {
+    static void clearConsole(void) {
         printf("\033[H\033[J");
     }
 #endif
@@ -37,8 +37,8 @@ static void clear(void);
  * Clears the screen and print the title
  */
 void printTitle(void) {
+    clearConsole();
     unsigned int titleLines = sizeof(titleString) / sizeof(*titleString);
-    clear();
     for (int i = 0; i < titleLines; i++) {
         printCentered(' ', titleString[i]);
     }
@@ -51,12 +51,13 @@ void printTitle(void) {
  * @param otherPlayer If not NULL, will stop player from having same name as otherPlayer
  */
 void askPlayerForName(Player *player, Player *otherPlayer) {
-    clear();
+    clearConsole();
     printTitle();
     while (1) {
-        //Asks player for their name
+
         printCentered('-', "Please enter your name: ");
         printf("\t> ");
+
         if (fgets(player->name, sizeof(player->name), stdin) == NULL) {
             fprintf(stderr, "Error reading input\n");
             exit(1);
@@ -64,6 +65,7 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
 
         //Cut of \n at the end
         player->name[strlen(player->name) - 1] = '\0';
+
         //Checking names aren't the same
         if (otherPlayer != NULL && strcmp(player->name, otherPlayer->name) == 0)
             printCentered('-', "Both players can't have the same name");
@@ -80,7 +82,7 @@ void askPlayerForName(Player *player, Player *otherPlayer) {
  * @param otherPlayer Other player. Both players can't have the same colour
  */
 void askPlayerForColour(Player *player, Player *otherPlayer) {
-    clear();
+    clearConsole();
     printTitle();
     printCentered('-', "%s, please select your colour [index]:", player->name);
     for (int index = 1; index < 7; index++) {
@@ -123,7 +125,7 @@ void printBoard(Game *game, Cell *selectedCell) {
     char *bar = "│"; //Unicode character for a full height bar.
 #endif
 
-    clear();
+    clearConsole();
 
     Cell *cell;
     char colourLetter;
@@ -135,14 +137,10 @@ void printBoard(Game *game, Cell *selectedCell) {
     char stackString[5];
     int strIndex;
 
-    //Looping through every line of the board
+    //Looping through every line of the board string
     for (int pixelY = 0; pixelY < 34; pixelY++) {
         //Printing cell details if middle of cell reached
         if (pixelY % 4 == 3) {
-            // signifies whether the first piece in a row has been printed
-            // The first cell prints "|   |"
-            // The rest print "   |"
-            // When combined, you get "|   |   |   |"
             printedFirst = false;
 
             //Converting pixel position to row index
@@ -178,10 +176,10 @@ void printBoard(Game *game, Cell *selectedCell) {
                     //Printing stack info
                     printf("%s%c%5s%c%s",
                             printedFirst ? "" : bar,
-                           cell == selectedCell ? '[' : ' ',
+                            cell == selectedCell ? '[' : ' ',
                             stackString,
-                           cell == selectedCell ? ']' : ' ',
-                           bar
+                            cell == selectedCell ? ']' : ' ',
+                            bar
                             );
                 }
                 printedFirst = true;
@@ -253,7 +251,7 @@ static void printSeparator(void) {
  * @param maxDist IF asking for destination. The max distance allowed from source cell
  * @return
  */
-Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist) {
+Cell *askUserForCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist) {
     char temp[32];
     unsigned int cellX, cellY, sscanfreturn, distance;
     Cell *cell;

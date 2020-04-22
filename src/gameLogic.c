@@ -9,8 +9,11 @@ static void shortenCell(Cell *cell);
  * Creates a new piece owned by player and places it on top of cell
  * @param cell The cell where to place the new cell
  * @param player The player which will own the cell
+ * \note
+ * Assume's player's reservedCounter > 0
  */
-static void placePiece(Cell *cell, Player *player) {
+static void pushPiece(Cell *cell, Player *player) {
+
     Piece *piece = (Piece *)malloc(sizeof(*piece));
 
     if (piece == NULL) {
@@ -18,12 +21,11 @@ static void placePiece(Cell *cell, Player *player) {
         exit(EXIT_FAILURE);
     }
 
-    player->reservedCounter--;
-
     piece->owner = player;
     piece->next = cell->head;
     cell->head = piece;
     cell->length += 1;
+    player->reservedCounter--;
 
     if (cell->length > 4)
         shortenCell(cell);
@@ -56,30 +58,12 @@ void movePieces(Cell *source, Cell *destination, unsigned int count) {
         return;
     }
 
-    Piece *newSourceHead = source->head;    //This will become the new head of source;
+    Piece *newSourceHead = source->head;
     Piece *piece = source->head;  //This is the piece above the newSourceHead;
     for (unsigned int index = 0; index < count; index++) {
         piece = newSourceHead;
         newSourceHead = newSourceHead->next;
     }
-
-    /* BEFORE
-     * Source -> p1 -> p2 -> p3 -> p4
-     * Destination -> p5 -> p6 -> p7
-     *
-     * e.g. count == 2
-     *
-     *         --------------|
-     * AFTER  /              \/
-     * Source    p1 -> p2    p3 -> p4
-     *           /\     |
-     *           |     \/
-     * Destination     p5 -> p6 -> p7
-     *
-     *
-     * Source -> p3 -> p4
-     * Destination -> p1 -> p2 -> p5 -> p6 -> p7
-     */
 
     piece->next = destination->head;
     destination->head = source->head;
@@ -109,32 +93,25 @@ static void shortenCell(Cell *cell) {
 
     assert(cell->length > 5);
 
-    //The player who own's the stack
-    Player *player = cell->head->owner;
+    Player *stackOwner = cell->head->owner;
 
-    //newTail is the 5th piece;
     Piece *newTail = cell->head->next->next->next->next;
 
-    //Used for looping
     Piece *piece = newTail->next;
     Piece *current = NULL;
 
     //Looping until the bottom of the stack
     while (piece != NULL) {
-        if (piece->owner == player) {
-            //Increases the amount of pieces a player has reserved
-            player->reservedCounter++;
+        if (piece->owner == stackOwner) {
+            stackOwner->reservedCounter++;
         }
         current = piece;
         piece = piece->next;
-
-        //Free's pieces that aren't currently in game
         free(current);
     }
 
-    //Setting the new tail and stopping tail from pointing to free'd memory
+    newTail->next = NULL;
     cell->tail = newTail;
-    cell->tail->next = NULL;
     cell->length = 5;
 }
 
@@ -143,7 +120,7 @@ static void shortenCell(Cell *cell) {
  * Gets the taxicab distance between two cells
  * @param cell1 Cell1
  * @param cell2 Cell2
- * @return |cell1.rowIndex - cell2.rowIndex| + |cell1.columnIndex - cell2.columnIndex|
+ * @return The taxicab distance between the two cells
  */
 unsigned  getDistance(Cell *cell1, Cell *cell2) {
     return abs(cell1->rowIndex - cell2->rowIndex) + abs(cell1->columnIndex - cell2->columnIndex);
@@ -155,7 +132,7 @@ unsigned  getDistance(Cell *cell1, Cell *cell2) {
  * @param game A game instance
  */
 void runGame(Game *game) {
-    Cell *source, *destination;
+    Cell *sourceCell, *destinationCell;
     bool placeReservedPiece = false;
     Player *currentPlayer, *otherPlayer;
     unsigned int count;
@@ -163,17 +140,18 @@ void runGame(Game *game) {
     while (true) {
         currentPlayer = game->players[game->moveIndex % 2];
         otherPlayer = game->players[(game->moveIndex + 1) % 2];
-        source = selectCell(game, NULL, &placeReservedPiece, 0);
+
+        sourceCell = askUserForCell(game, NULL, &placeReservedPiece, -1);
 
         if (placeReservedPiece) {
-            placePiece(source, currentPlayer);
+            pushPiece(sourceCell, currentPlayer);
         } else {
-            count = askCount(game, source);
-            destination = selectCell(game, source, NULL, count);
-            movePieces(source, destination, count);
+            count = askCount(game, sourceCell);
+            destinationCell = askUserForCell(game, sourceCell, NULL, count);
+            movePieces(sourceCell, destinationCell, count);
         }
 
-        if (otherPlayer->reservedCounter == 0 && !playerCanMakeMove(game, otherPlayer)) {
+        if (playerCanMakeMove(game, otherPlayer) == false) {
             printWinner(game, currentPlayer);
             break;
         }
@@ -190,6 +168,9 @@ void runGame(Game *game) {
  * @return bool signifying whether player can move
  */
 static bool playerCanMakeMove(Game *game, Player *player) {
+    if (player->reservedCounter > 0)
+        return true;
+
     Cell *cell;
 
     //Looping through cell grid
@@ -208,6 +189,6 @@ static bool playerCanMakeMove(Game *game, Player *player) {
         }
     }
 
-    //If the whole board has been looped, no move for palyer exists
+    //If the whole board has been looped, no move for player exists
     return false;
 }

@@ -11,7 +11,6 @@ static Player *initialisePlayer(Player *otherPlayer);
 static Player *initialisePlayer(Player *otherPlayer) {
     Player *player = (Player *) malloc(sizeof(Player));
 
-    //If malloc fails
     if (player == NULL) {
         fprintf(stderr, "Unable to allocate memory for a player");
         exit(1);
@@ -29,16 +28,13 @@ static Player *initialisePlayer(Player *otherPlayer) {
  * @return The game variables
  */
 Game *initialiseGame(void) {
-    //Allocating memory for board
     Game *game = (Game *) malloc(sizeof(*game));
 
-    //In the rare case that malloc fails
     if (game == NULL) {
         fprintf(stderr, "Unable to allocate memory for the game\n");
         exit(EXIT_FAILURE);
     }
 
-    //Initialising both players
     Player *player1 = initialisePlayer(NULL);
     Player *player2 = initialisePlayer(player1);
 
@@ -55,21 +51,20 @@ Game *initialiseGame(void) {
     for (int rowIndex = 0; rowIndex < 8; rowIndex++) {
         for (int columnIndex = 0; columnIndex < 8; columnIndex++) {
 
-            squaredDistance = pow(rowIndex - 3.5, 2) + pow(columnIndex - 3.5, 2);
+            squaredDistance = pow(rowIndex - 3.5, 2) +pow(columnIndex - 3.5, 2);
 
             //If cell is too far away, it's one of the invalid corner pieces
             if (squaredDistance > 18) {
                 game->cells[rowIndex][columnIndex] = NULL;
                 continue;
             }
-            //Allocating memory
+
             cell = (Cell *)malloc(sizeof(Cell));
             if (cell == NULL) {
                 fprintf(stderr, "Error allocating memory for a cell\n");
                 exit(EXIT_FAILURE);
             }
 
-            //Initialising cell to null
             cell->head = NULL;
             cell->tail = NULL;
             cell->length = 0;
@@ -98,8 +93,8 @@ Game *initialiseGame(void) {
             else
                 piece->owner = game->players[1];
 
-            cell = game->cells[rowIndex + 1][columnIndex + 1];
 
+            cell = game->cells[rowIndex + 1][columnIndex + 1];
             cell->head = piece;
             cell->tail = piece;
             cell->length = 1;
@@ -116,8 +111,8 @@ Game *initialiseGame(void) {
  */
 void freeBoard(Game *game) {
     Cell *stack = NULL;
+    Piece *tempPiece = NULL;
     Piece *piece = NULL;
-    Piece *temp = NULL;
 
     //Looping through the 8x8 board
     for (int rowIndex = 0; rowIndex < 8; rowIndex++) {
@@ -125,22 +120,20 @@ void freeBoard(Game *game) {
             stack = game->cells[rowIndex][columnIndex];
 
             if (stack != NULL) {
-                piece = stack->head;
+                tempPiece = stack->head;
                 //Free all pieces in a stack
-                while (piece != NULL) {
-                    temp = piece;
-                    piece = piece->next;
+                while (tempPiece != NULL) {
+                    piece = tempPiece;
+                    tempPiece = tempPiece->next;
                     //Freeing the pieces
-                    free(temp);
+                    free(piece);
                 }
                 free(stack); //Free the stack itself
             }
         }
     }
-    //Free both players
+
     free(game->players[0]);
     free(game->players[1]);
-    //Free game itself
     free(game);
-
 }
