@@ -6,6 +6,7 @@ static void printCentered(char paddingChar, const char *format, ...);
 static void printSeparator(void);
 static bool askAction(Game *game, Cell *cell, char *message, Player *currentPlayer, bool *placeReservedPiece);
 static void clearConsole(void);
+static void setColour(Colour c);
 
 //Because Windows is annoying and doesn't support ANSI escape sequences
 #ifdef _WIN32
@@ -26,10 +27,18 @@ static void clearConsole(void);
                 screen.dwSize.X * screen.dwSize.Y, topLeft, &written
         );
         SetConsoleCursorPosition(console, topLeft);
+    }    
+
+    static void setColour(Colour c) {
+        
     }
 #else
     static void clearConsole(void) {
         printf("\033[H\033[J");
+    }
+
+    static void setColour(Colour c) {
+        printf("%s", colourCodes[(int) c]);
     }
 #endif
 
@@ -86,8 +95,11 @@ void askPlayerForColour(Player *player, Player *otherPlayer) {
     printTitle();
     printCentered('-', "%s, please select your colour [index]:", player->name);
     for (int index = 1; index < 7; index++) {
-        if (otherPlayer == NULL || index != (int)otherPlayer->colour)
+        if (otherPlayer == NULL || index != (int)otherPlayer->colour) {
+            setColour((Colour) index);
             printf("\t\t\t%d) %s\n", index, colourStrings[index]);
+            setColour(BLANK);
+        }
     }
 
     int colourValue;
@@ -162,26 +174,26 @@ void printBoard(Game *game, Cell *selectedCell) {
                     printf("%s       %s", printedFirst ? "" : bar, bar);
                 } else {
 
-                    strIndex = 0;
+                    printf("%s", printedFirst ? "" : bar);
+                    printf("%c", cell==selectedCell ? '[' : ' ');
+
+                    for (int i = 0; i < 5 - cell->length; i++) {
+                        printf(" ");
+                    }
 
                     tempPiece = cell->head;
-                    //Converting stack into a string
                     while (tempPiece != NULL) {
                         colourLetter = colourStrings[(int)tempPiece->owner->colour][0];
-                        stackString[strIndex++] = colourLetter;
+                        setColour(tempPiece->owner->colour);
+                        printf("%c", colourLetter);
+                        setColour(BLANK);
                         tempPiece = tempPiece->next;
                     }
-                    stackString[strIndex] = '\0';
 
-                    //Printing stack info
-                    printf("%s%c%5s%c%s",
-                            printedFirst ? "" : bar,
-                            cell == selectedCell ? '[' : ' ',
-                            stackString,
-                            cell == selectedCell ? ']' : ' ',
-                            bar
-                            );
+                    printf("%c", cell==selectedCell ? ']' : ' ');
+                    printf("%s", bar);
                 }
+
                 printedFirst = true;
 
             }
@@ -263,7 +275,9 @@ Cell *askUserForCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, uns
 
     printBoard(game, sourceCell);
     if (sourceCell == NULL) {
+        setColour(currentPlayer->colour);
         printCentered('-', "%s's Move (%s)", currentPlayer->name, colourStrings[(int)currentPlayer->colour]);
+        setColour(BLANK);
         printCentered(' ', "You have %d pieces reserved.", currentPlayer->reservedCounter);
         printCentered(' ', "%s has %d pieces reserved", opponentPlayer->name, opponentPlayer->reservedCounter);
     } else {

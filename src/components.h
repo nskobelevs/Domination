@@ -6,10 +6,9 @@
 /**
  * \brief
  * An enum to store the colour of a player<br>
- * 1-based indexing due to having to use it in <i>color_pair</i> which can't use 0 as index
  */
 typedef enum {
-    RED = 1, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BLANK
+    BLANK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN
 } Colour;
 
 

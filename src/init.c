@@ -19,6 +19,8 @@ static Player *initialisePlayer(Player *otherPlayer) {
     askPlayerForName(player, otherPlayer);
     askPlayerForColour(player, otherPlayer);
 
+    player->reservedCounter = 0;
+
     return player;
 }
 

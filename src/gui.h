@@ -33,14 +33,14 @@ static const char *colourStrings[] = {
         "Cyan"
 };
 
-static const Colour colours[] = {
-        0,
-        RED,
-        GREEN,
-        YELLOW,
-        BLUE,
-        MAGENTA,
-        BLANK
+static const char * colourCodes[] = {
+        "\033[0m",
+        "\033[31m",
+        "\033[32m",
+        "\033[33m",
+        "\033[34m",
+        "\033[35m",
+        "\033[36m"
 };
 
 //Because Windows is annoying and doesn't like unicode
