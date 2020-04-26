@@ -25,7 +25,7 @@ typedef struct {
  * \brief Represents a single game piece
  */
 typedef struct Piece {
-    Player *owner; //!< A pointer to the player that own's the piece
+    Player *owner; //!< A pointer to the player that owns the piece
     struct Piece *next; //!< A pointer to the piece below it. NULL if this is the bottom-most piece
 } Piece;
 
