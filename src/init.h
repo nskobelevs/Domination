@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "log.h"
 #include "gui.h"
 #include "components.h"
 
