@@ -1,5 +1,4 @@
 # Domination
-Domination board game implementation in C using ncurses
-
+Domination board game implementation in C
 Documented using Doxygen.
 PDF reference available in doc/
