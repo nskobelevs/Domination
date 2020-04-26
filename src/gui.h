@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include "log.h"
 #include "gameLogic.h"
 #include "components.h"
 
@@ -18,7 +17,7 @@ void askPlayerForColour(Player *player, Player *otherPlayer);
 
 void printBoard(Game *game, Cell *selectedCell);
 
-Cell *selectCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist);
+Cell *askUserForCell(Game *game, Cell *sourceCell, bool *placeReservedPiece, unsigned int maxDist);
 
 unsigned int askCount(Game *game, Cell *source);
 
@@ -31,18 +30,57 @@ static const char *colourStrings[] = {
         "Yellow",
         "Blue",
         "Magenta",
+        "Cyan"
 };
 
-static const Colour colours[] = {
-        0,
-        RED,
-        GREEN,
-        YELLOW,
-        BLUE,
-        MAGENTA,
-        BLANK
+static const char * colourCodes[] = {
+        "\033[0m",
+        "\033[31m",
+        "\033[32m",
+        "\033[33m",
+        "\033[34m",
+        "\033[35m",
+        "\033[36m"
 };
 
+//Because Windows is annoying and doesn't like unicode
+#ifdef __WIN32__
+static const char *boardString[] = {
+        "    0       1       2       3       4       5       6       7    ",
+        "                ---------------------------------                ",
+        "                |       |       |       |       |                ",
+        "                |       |       |       |       |                ",
+        "                |       |       |       |       |                ",
+        "        --------|-------|-------|-------|-------|--------        ",
+        "        |       |       |       |       |       |       |        ",
+        "        |       |       |       |       |       |       |        ",
+        "        |       |       |       |       |       |       |        ",
+        "--------|-------|-------|-------|-------|-------|-------|--------",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|-------|-------|-------|-------|-------|-------|-------|-------|",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|-------|-------|-------|-------|-------|-------|-------|-------|",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|-------|-------|-------|-------|-------|-------|-------|-------|",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "|       |       |       |       |       |       |       |       |",
+        "--------|-------|-------|-------|-------|-------|-------|--------",
+        "        |       |       |       |       |       |       |        ",
+        "        |       |       |       |       |       |       |        ",
+        "        |       |       |       |       |       |       |        ",
+        "        --------|-------|-------|-------|-------|--------        ",
+        "                |       |       |       |       |                ",
+        "                |       |       |       |       |                ",
+        "                |       |       |       |       |                ",
+        "                ---------------------------------                "};
+#else
 static const char *boardString[] = {
         "    0       1       2       3       4       5       6       7    ",
         "                ┌───────┬───────┬───────┬───────┐                ",
@@ -78,6 +116,7 @@ static const char *boardString[] = {
         "                │       │       │       │       │                ",
         "                │       │       │       │       │                ",
         "                └───────┴───────┴───────┴───────┘                "};
+#endif
 
 static const char *titleString[] = {
         "  _____                  _             _   _             ",

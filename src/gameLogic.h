@@ -1,7 +1,3 @@
-//
-// Created by nskobelevs on 26/03/2020.
-//
-
 #ifndef DOMINATION_GAMELOGIC_H
 #define DOMINATION_GAMELOGIC_H
 
@@ -10,7 +6,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include "log.h"
 #include "gui.h"
 #include "components.h"
 

@@ -9,31 +9,23 @@ static void shortenCell(Cell *cell);
  * Creates a new piece owned by player and places it on top of cell
  * @param cell The cell where to place the new cell
  * @param player The player which will own the cell
+ * \note
+ * Assume's player's reservedCounter > 0
  */
-static void placePiece(Cell *cell, Player *player) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, cell, player);
-#endif
+static void pushPiece(Cell *cell, Player *player) {
 
     Piece *piece = (Piece *)malloc(sizeof(*piece));
 
     if (piece == NULL) {
-
-#ifdef DEBUG
-        LOG("%s:%d ERROR: malloc() returned NULL. Exiting...\n", __FILE__, __LINE__);
-#endif
-
         fprintf(stderr, "Unable to allocate memory for a piece\n");
         exit(EXIT_FAILURE);
     }
-
-    player->reservedCounter--;
 
     piece->owner = player;
     piece->next = cell->head;
     cell->head = piece;
     cell->length += 1;
+    player->reservedCounter--;
 
     if (cell->length > 4)
         shortenCell(cell);
@@ -47,22 +39,6 @@ static void placePiece(Cell *cell, Player *player) {
  * @param count How many pieces to move<br>
  */
 void movePieces(Cell *source, Cell *destination, unsigned int count) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p, %u) called\n", __func__, source, destination, count);
-    LOG("INFO: moving %d pieces from (%d, %d) to (%d, %d)\n",
-            count, source->columnIndex, source->rowIndex, destination->columnIndex, destination->rowIndex);
-    LOG("INFO: source @ %p, source->head @ %p, source->tail @ %p, source->length: %u\n",
-            source, source->head, source->tail, source->length);
-    LOG("INFO: destination @ %p, destination->head @ %p, destination->tail @ %p, destination->length: %u\n",
-            destination, destination->head, destination->tail, destination->length);
-#endif
-
-    //Basic assumptions
-    assert(count <= source->length);
-    assert(count != 0);
-    assert(source->length != 0);
-    assert(destination != source);
 
     if (count == source->length) {
         source->tail->next = destination->head;
@@ -82,30 +58,12 @@ void movePieces(Cell *source, Cell *destination, unsigned int count) {
         return;
     }
 
-    Piece *newSourceHead = source->head;    //This will become the new head of source;
+    Piece *newSourceHead = source->head;
     Piece *piece = source->head;  //This is the piece above the newSourceHead;
     for (unsigned int index = 0; index < count; index++) {
         piece = newSourceHead;
         newSourceHead = newSourceHead->next;
     }
-
-    /* BEFORE
-     * Source -> p1 -> p2 -> p3 -> p4
-     * Destination -> p5 -> p6 -> p7
-     *
-     * e.g. count == 2
-     *
-     *         --------------|
-     * AFTER  /              \/
-     * Source    p1 -> p2    p3 -> p4
-     *           /\     |
-     *           |     \/
-     * Destination     p5 -> p6 -> p7
-     *
-     *
-     * Source -> p3 -> p4
-     * Destination -> p1 -> p2 -> p5 -> p6 -> p7
-     */
 
     piece->next = destination->head;
     destination->head = source->head;
@@ -133,38 +91,27 @@ void movePieces(Cell *source, Cell *destination, unsigned int count) {
  */
 static void shortenCell(Cell *cell) {
 
-#ifdef DEBUG
-    LOG("INFO: %s(%p) called\n", __func__, cell);
-    LOG("cell @ %p, cell->head @ %p, cell->tail @ %p, cell->length = %d\n",
-        cell, cell->head, cell->tail, cell->length);
-#endif
-
     assert(cell->length > 5);
 
-    //The player who own's the stack
-    Player *player = cell->head->owner;
-    //newTail is the 5th piece;
+    Player *stackOwner = cell->head->owner;
+
     Piece *newTail = cell->head->next->next->next->next;
 
     Piece *piece = newTail->next;
-    Piece *temp = piece;
+    Piece *current = NULL;
 
     //Looping until the bottom of the stack
     while (piece != NULL) {
-        if (piece->owner == player) {
-            //Increases the amount of pieces a player has reserved
-            player->reservedCounter++;
+        if (piece->owner == stackOwner) {
+            stackOwner->reservedCounter++;
         }
-        temp = piece;
+        current = piece;
         piece = piece->next;
-
-        //Free's pieces that aren't currently in game
-        free(temp);
+        free(current);
     }
 
-    //Setting the new tail and stopping tail from pointing to free'd memory
+    newTail->next = NULL;
     cell->tail = newTail;
-    cell->tail->next = NULL;
     cell->length = 5;
 }
 
@@ -173,12 +120,9 @@ static void shortenCell(Cell *cell) {
  * Gets the taxicab distance between two cells
  * @param cell1 Cell1
  * @param cell2 Cell2
- * @return |cell1.rowIndex - cell2.rowIndex| + |cell1.columnIndex - cell2.columnIndex|
+ * @return The taxicab distance between the two cells
  */
 unsigned  getDistance(Cell *cell1, Cell *cell2) {
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, cell1, cell2);
-#endif
     return abs(cell1->rowIndex - cell2->rowIndex) + abs(cell1->columnIndex - cell2->columnIndex);
 }
 
@@ -188,12 +132,7 @@ unsigned  getDistance(Cell *cell1, Cell *cell2) {
  * @param game A game instance
  */
 void runGame(Game *game) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p) called\n", __func__, game);
-#endif
-
-    Cell *source, *destination;
+    Cell *sourceCell, *destinationCell;
     bool placeReservedPiece = false;
     Player *currentPlayer, *otherPlayer;
     unsigned int count;
@@ -202,34 +141,17 @@ void runGame(Game *game) {
         currentPlayer = game->players[game->moveIndex % 2];
         otherPlayer = game->players[(game->moveIndex + 1) % 2];
 
-#ifdef DEBUG
-        LOG("INFO: moveIndex: %d, player1 @ %p, player2 @ %p\n", game->moveIndex, currentPlayer, otherPlayer);
-#endif
-
-        source = selectCell(game, NULL, &placeReservedPiece, 0);
-
-
-#ifdef DEBUG
-        LOG("INFO: player @ %p selected cell @ %p, decided to place?: %s\n",
-                currentPlayer, source, placeReservedPiece ? "true" : "false");
-#endif
+        sourceCell = askUserForCell(game, NULL, &placeReservedPiece, -1);
 
         if (placeReservedPiece) {
-            placePiece(source, currentPlayer);
+            pushPiece(sourceCell, currentPlayer);
         } else {
-            count = askCount(game, source);
-            destination = selectCell(game, source, NULL, count);
-
-
-#ifdef DEBUG
-            LOG("INFO: player @ %p selected cell @ %p, decided to place?: %s\n",
-                currentPlayer, source, placeReservedPiece ? "true" : "false");
-#endif
-
-            movePieces(source, destination, count);
+            count = askCount(game, sourceCell);
+            destinationCell = askUserForCell(game, sourceCell, NULL, count);
+            movePieces(sourceCell, destinationCell, count);
         }
 
-        if (otherPlayer->reservedCounter == 0 && !playerCanMakeMove(game, otherPlayer)) {
+        if (playerCanMakeMove(game, otherPlayer) == false) {
             printWinner(game, currentPlayer);
             break;
         }
@@ -246,10 +168,8 @@ void runGame(Game *game) {
  * @return bool signifying whether player can move
  */
 static bool playerCanMakeMove(Game *game, Player *player) {
-
-#ifdef DEBUG
-    LOG("INFO: %s(%p, %p) called\n", __func__, game, player);
-#endif
+    if (player->reservedCounter > 0)
+        return true;
 
     Cell *cell;
 
@@ -264,16 +184,11 @@ static bool playerCanMakeMove(Game *game, Player *player) {
 
             //If stack is owned by player, they can make a valid move
             if (cell->head->owner == player) {
-
-#ifdef DEBUG
-                LOG("INFO: cell (%d, %d) @ %p owned by player @ %p\n",
-                        cell->columnIndex, cell->rowIndex, player);
-#endif
                 return true;
             }
         }
     }
 
-    //If the whole board has been looped, no move for palyer exists
+    //If the whole board has been looped, no move for player exists
     return false;
 }
