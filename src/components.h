@@ -19,7 +19,7 @@ typedef struct {
     char name[24]; //!< The player name
     Colour colour; //!< The player's chosen colour representation
     unsigned int reservedCounter; //!< The number of pieces a player has reserved
-    unsigned int caputedCounter; //!< The number of opponent's pieces a player has captured
+    unsigned int capturedCounter; //!< The number of opponent's pieces a player has captured
 } Player;
 
 /**

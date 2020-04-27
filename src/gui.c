@@ -433,5 +433,5 @@ void printWinner(Game *game, Player *player) {
     printCentered(' ', "%s's stats:", player->name);
     printCentered(' ', "Moves taken: %d", game->moveIndex);
     printCentered(' ', "Pieces reserved: %d", player->reservedCounter);
-    printCentered(' ', "Opponent's pieces captured: %d", player->caputedCounter);
+    printCentered(' ', "Opponent's pieces captured: %d", player->capturedCounter);
 }

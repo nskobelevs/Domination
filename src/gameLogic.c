@@ -105,7 +105,7 @@ static void shortenCell(Cell *cell) {
         if (piece->owner == stackOwner) {
             stackOwner->reservedCounter++;
         } else {
-            stackOwner->caputedCounter++;
+            stackOwner->capturedCounter++;
         }
         current = piece;
         piece = piece->next;
